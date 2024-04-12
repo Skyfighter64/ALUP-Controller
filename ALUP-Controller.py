@@ -87,7 +87,6 @@ def DeviceDialogue(args):
                 r = max(min(int(answers[2]),255),0)
                 g = max(min(int(answers[3]),255),0)
                 b = max(min(int(answers[4]),255),0)
-                # needing to set all other leds manually; Python-ALUP should implement a function to set by index
                 colors = [RGBToHex(r,g,b)]
                 device.SetColors(colors)
                 device.frame.offset = led_index
@@ -96,8 +95,14 @@ def DeviceDialogue(args):
             except ValueError:
                 print("index/R/G/B Values have to be integer")
         elif(answers[0] == "setall"):
-            #todo
-            pass
+            # read in rgb colors and make sure they are within 0-255
+            r = max(min(int(answers[1]),255),0)
+            g = max(min(int(answers[2]),255),0)
+            b = max(min(int(answers[3]),255),0)
+            colors = [RGBToHex(r,g,b)] * device.configuration.ledCount
+            device.SetColors(colors)
+            device.Send()
+
         elif(answers[0] == "setarray"):
             #todo
             pass
@@ -191,6 +196,7 @@ def GetAnswer(options, errortext):
             print(errortext)
         else:
             return answer
+
 
 def ScanForDevices():
     print("Scanning for connected devices")

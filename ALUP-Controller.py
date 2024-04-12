@@ -165,14 +165,6 @@ def ConnectionDialogue(args):
             print("\n>>> Error: Could not connect to device: Device not found.\n>>> Type \"list\" to list all devices or \"exit\" to return")
 
 
-    # Connect to ALUP
-    print("Connecting to Serial ALUP at %s, %d" % (com_port, baud))
-    print(str(arduino.configuration))
-
-    print("Disconnecting...")
-    arduino.Disconnect()
-    print("disconnected")
-
 # convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb
 def RGBToHex(r,g,b):
     color = r

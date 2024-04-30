@@ -1,9 +1,16 @@
 import sys
-import platform
-sys.path.insert(0,'Python-ALUP')
-import importlib  
+import ast
+
 import serial
 import serial.tools.list_ports as list_ports
+
+# led effects
+from effects import effects
+
+
+sys.path.insert(0,'Python-ALUP')
+import importlib  
+
 # import the main ALUP library
 Device = getattr(importlib.import_module("Python-ALUP.src.Device"), "Device")
 #from Python-ALUP.src.Device import Device
@@ -60,7 +67,7 @@ def main():
             print("exit\t\t\t:\t Exit program")
             print()
         else:
-            print("Type \"help\" for help")
+            print("Unknown Command. Type \"help\" for help")
 
 def DeviceDialogue(args):
     device, com_port = ConnectionDialogue(args)
@@ -106,6 +113,13 @@ def DeviceDialogue(args):
         elif(answers[0] == "setarray"):
             #todo
             pass
+
+        elif (answers[0] == "effect"):
+            # call function from effect library
+            # the <n> parameter will be applied automatically
+            # example: "effect StaticColors 0xffffff"
+            #           "effect Rainbow"
+            ApplyEffect(answers[1:], device)
         elif(answers[0] == "clear"):
             # needing to set command manually; Python-ALUP should implement a device.Clear() command
             device.SetCommand(Command.CLEAR)
@@ -122,11 +136,12 @@ def DeviceDialogue(args):
                 print("set [i] [R] [G] [B]\t:\t Set led with index i to the specified color (Starting at 0). R/G/B are in range [0-255]")
                 print("setall [R] [G] [B]\t:\t Set all leds to the specified color. R/G/B are in range [0-255]")
                 print("setarray [array]\t:\t Set the leds to the given array. All unspecified leds remain unchanged")
+                print("effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py")
                 print("clear\t\t\t:\t Set all leds to black")
                 print("Command [command]\t:\t Send an ALUP command to the device")
                 print()
         else:
-            print("Type \"help\" for help")
+            print("Unknown Command  \"%s\" Type \"help\" for help" % ( answers[0]))
 
 
 def ConnectionDialogue(args):
@@ -167,7 +182,46 @@ def ConnectionDialogue(args):
             device.SerialConnect(com_port, baud)
             return device, com_port
         except serial.serialutil.SerialException:
+            # BUG: This is repeated/spammed in loop if printed
             print("\n>>> Error: Could not connect to device: Device not found.\n>>> Type \"list\" to list all devices or \"exit\" to return")
+
+
+
+# apply an effect from the effects.py module
+# the args parameter has to contain the function name of the effect as first argument
+# @param args: [<effect function name in effects.py>, <optional parameters for effect>...] where each element is a string
+def ApplyEffect(args, device):
+    try:
+        # HACK: allow any function from effects.py to be executed. This 
+        # allows maximum flexibility but might be a bad practice
+        # Arguments for functions may be specified in args as string array
+        # they are converted into python datatypes automatically
+
+        # try to automatically cast string arguments to their respective native types
+        castedArgs = [_castString(arg) for arg in args[1:]]
+
+        # get effect function from effects.py by string name
+        effect = getattr(effects, args[0])
+        # call effect function with args
+        colors = effect(device.configuration.ledCount, *castedArgs)
+        # send colors to ALUP device
+        device.SetColors(colors)
+        device.Send()
+    except AttributeError:
+        print("Error: could not find function %s in effects.py" %(args[0]))
+    except TypeError as e:
+        print("Error: Wrong amount of arguments given for effect %s", str(args[0]))
+        print(e)
+
+
+# try to convert the given string to a python datatype depending on its contents 
+def _castString(s):
+    try:
+        return ast.literal_eval(s)
+    except ValueError:
+        print("Warning: Could not convert value %s into native type; Will be interpreted as string" %(s))
+        return s
+
 
 
 # convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb

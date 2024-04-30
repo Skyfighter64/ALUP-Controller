@@ -20,3 +20,15 @@ or
 `python3 ALUP-Controller.py`
 
 Type `help` to see available commands
+
+
+## Unit Testing:
+Use `python -m unittest .\tests\test_effects.py` for single test file, `python -m unittest discover -s tests/` to run all tests
+
+
+## Add new effects:
+To add new effects, simply add a function in effects.py. This fucntion has to comply with the properties listed there.\
+
+To apply the effect: 
+- connect to the ALUP Device
+- use `effect <function name> <optional params>` to apply the effect

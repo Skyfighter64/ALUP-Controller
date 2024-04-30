@@ -30,7 +30,7 @@ class effects:
 
     # Example effect:
     @staticmethod
-    def SingleColor(n: int, color : int) -> [int]:
+    def SingleColor(n: int, color : int) -> list[int]:
         """Apply the given color to all LEDs
         
         Parameters:
@@ -46,7 +46,7 @@ class effects:
 
      # Example effect:
     @staticmethod
-    def Gradient(n: int, firstColor : int, secondColor : int) -> [int]:
+    def Gradient(n: int, firstColor : int, secondColor : int) -> list[int]:
         """A gradient over all LEDs from the first to the last LED
         
         Parameters:

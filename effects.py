@@ -22,6 +22,7 @@ Allways specify default values for function arguments if possible
 
 # TODO: Create separate git, import as submodule
 
+import math
 import colorsys
 
 class effects:
@@ -44,32 +45,57 @@ class effects:
     
 
 
-     # Example effect:
     @staticmethod
-    def Gradient(n: int, firstColor : int, secondColor : int) -> list[int]:
+    def Gradient(n: int, *colors) -> list[int]:
         """A gradient over all LEDs from the first to the last LED
         
         Parameters:
         n: size of the returned array
-        firstColor: The gradient start color
-        lastColor: The gradient end color
+        *colors: positive number of integer color values; 
+        The effect will be divided into (len(colors) - 1) sections with gradients 
+        to the neighboring colors for each section.
+        
+        Here, the first color will be at the first LED, the last color at the last LED, 
+        and every color inbetween will be distributed evenly on all n leds.
+        The sections between two colors will be filled with a gradient.
 
         Returns:
-        return_type: An array containing a gradient from firstColor to  lastColor
+        return_type: An array containing a gradient of all neighbours in the given colors
         """
 
-        # zero length allways returns empty array
+        if(len(colors) == 0):
+            # at least one color is neede for the gradient effect
+            # return only black color
+            return [0] * n
+        if(len(colors) == 1):
+            # only one color given, impossible to create gradient
+            # return just the given color
+            return [colors[0]] * n
+
+        # zero length always returns empty array
         if(n == 0):
             return []
-        # too small array, mix both colors 50/50
+        # too small array, mix all colors
         if(n == 1):
-            return [effects._InterpolateColors_(0.5, firstColor, secondColor)]
+            return [effects._Average(colors)]
 
-        colors = []
+        leds = []
+
         for i in range(n):
-            colors.append(effects._InterpolateColors_(i/(n-1), firstColor, secondColor))
+            # divide the leds into equal gradient sections
+            sections = len(colors) - 1
+            current_color_index = int((i / n) * sections)
+            gradient_index = i % math.ceil(n/len(colors))
+            # find the led's index in the current section
+            
+            left_color = colors[current_color_index]
+            right_color = colors[current_color_index + 1]
+            #leds.append(effects._InterpolateColors_(i/(n-1), left_color, right_color))
 
-        return colors
+            interpolation_percentage = gradient_index * sections / n
+            leds.append(effects._InterpolateColors_(interpolation_percentage, left_color, right_color)) # todo: test this, this does not seem to work as expected (according to unittests)
+
+        return leds
 
 
 
@@ -108,6 +134,8 @@ class effects:
             colors.append(effects._RainbowColor(((i - offset)/n) * scale))
         print("Rainbow colors: " + str(colors))
         return colors
+    
+
 
     @staticmethod
     def _RainbowColor(i):
@@ -148,3 +176,7 @@ class effects:
         g = (hex_color >> 8) & 0xFF
         b = hex_color & 0xFF
         return r,g,b
+
+    @staticmethod
+    def _Average(values):
+        return sum(values) / len(values)

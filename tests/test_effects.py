@@ -30,6 +30,9 @@ class TestEffects(unittest.TestCase):
         self.assertEqual(result, [0x000000, 0x7f7f7f, 0xffffff])
         result  = effects.Gradient(3, 0xff0000, 0x0000ff)
         self.assertEqual(result, [0xff0000, 0x7f007f, 0x0000ff])
+
+        result = effects.Gradient(3, 0x000000, 0xffffff, 0x0000ff)
+        self.assertEqual(result, [0x000000, 0xffffff, 0x0000ff])
         
 
 
@@ -60,8 +63,8 @@ class TestEffects(unittest.TestCase):
         result = effects.Rainbow(3, scale = 3)
         self.assertEqual(result, [0xff0000, 0xff0000, 0xff0000])
 
-        #result = effects.Rainbow(3, scale = 2)
-        #self.assertEqual(result, [0xff0000, 0x00ff00, 0x00ff00]) # todo: fix
+        result = effects.Rainbow(3, scale = 2)
+        self.assertEqual(result, [0xff0000, 0x0000ff, 0x00ff00])
 
 
     def test_RGBToHex(self):

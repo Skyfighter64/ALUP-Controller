@@ -90,17 +90,17 @@ class effects:
             
             left_color = colors[current_color_index]
             right_color = colors[current_color_index + 1]
-            #leds.append(effects._InterpolateColors_(i/(n-1), left_color, right_color))
+            #leds.append(effects._InterpolateColors(i/(n-1), left_color, right_color))
 
             interpolation_percentage = gradient_index * sections / n
-            leds.append(effects._InterpolateColors_(interpolation_percentage, left_color, right_color)) # todo: test this, this does not seem to work as expected (according to unittests)
+            leds.append(effects._InterpolateColors(interpolation_percentage, left_color, right_color)) # todo: test this, this does not seem to work as expected (according to unittests)
 
         return leds
 
 
 
     @staticmethod
-    def _InterpolateColors_(fraction: float, firstColor, secondColor):
+    def _InterpolateColors(fraction: float, firstColor, secondColor):
         """Interpolate between the first and second color by the given fraction
         
         Parameters:

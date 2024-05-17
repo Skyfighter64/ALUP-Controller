@@ -1,6 +1,6 @@
 """A collection of functions generating RGB-Effects.
 
-All effect functions  need to have the signature:
+All effect functions need to have the signature:
         <description>
         
         Parameters:
@@ -17,6 +17,8 @@ Use HexToRGB(...) and RGBToHex(...) for conversion if needed
 For n == 0, an effect should return an empty array: [] 
 
 Allways specify default values for function arguments if possible
+
+All effects should have a python docstring specifying all input parameters.
 """
 
 
@@ -129,6 +131,16 @@ class effects:
 
     @staticmethod
     def Rainbow(n, offset = 0, scale = 1.0):
+        """Generate a rainbow effect
+
+        Parameters:
+        n: size of the returned RGB array
+        offset: the offset of the HSV rainbow colors in positive index direction (Hue offset for each index).
+        scale: the scaling factor for the rainbow color. scale < 1.0 stretches all colors while scale > 1.0 compresses them
+
+        Returns:
+        return_type: An array containing a rainbow effect for n LEDs
+        """
         # BUG: this effect is broken sometimes; returns values which are too big
         # example : Rainbow(10,5,1)
         colors = []

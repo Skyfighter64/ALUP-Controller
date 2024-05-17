@@ -85,14 +85,17 @@ class effects:
             # divide the leds into equal gradient sections
             sections = len(colors) - 1
             current_color_index = int((i / n) * sections)
-            gradient_index = i % math.ceil(n/len(colors))
+            gradient_index = i % math.ceil(n/sections)
             # find the led's index in the current section
             
             left_color = colors[current_color_index]
             right_color = colors[current_color_index + 1]
+
             #leds.append(effects._InterpolateColors(i/(n-1), left_color, right_color))
 
+            # bug: percentage is wrong, gets distributed over one value too much
             interpolation_percentage = gradient_index * sections / n
+            print("left %d right %d, sections %d, i %d, n %d, gradient_index %d, percentage %f" % (left_color, right_color, sections, i, n,  gradient_index, interpolation_percentage))
             leds.append(effects._InterpolateColors(interpolation_percentage, left_color, right_color)) # todo: test this, this does not seem to work as expected (according to unittests)
 
         return leds

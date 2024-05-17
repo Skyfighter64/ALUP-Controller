@@ -35,11 +35,11 @@ class TestEffects(unittest.TestCase):
 
     def test_InterpolateColors(self):
         print("Testing _InterpolateColors()")
-        result = effects._InterpolateColors_(0, 0x000000, 0xffffff)
+        result = effects._InterpolateColors(0, 0x000000, 0xffffff)
         self.assertEqual(result, 0x000000)
-        result = effects._InterpolateColors_(1, 0x000000, 0xffffff)
+        result = effects._InterpolateColors(1, 0x000000, 0xffffff)
         self.assertEqual(result, 0xffffff)
-        result = effects._InterpolateColors_(0.5, 0x000000, 0xffffff)
+        result = effects._InterpolateColors(0.5, 0x000000, 0xffffff)
         self.assertEqual(result, 0x7f7f7f)
 
 

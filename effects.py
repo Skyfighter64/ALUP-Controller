@@ -177,6 +177,26 @@ class effects:
         b = hex_color & 0xFF
         return r,g,b
 
+
+
     @staticmethod
     def _Average(values):
-        return sum(values) / len(values)
+        """Get average color of given hex color array
+        @param values: array of hex color values
+        @return: linear average hex color
+        """
+        r = []
+        g = []
+        b = []
+        
+        for value in values:
+            _r, _g, _b = effects.HexToRGB(value)
+            r.append(_r)
+            g.append(_g)
+            b.append(_b)
+
+        r_avg = int(sum(r) / len(r))
+        g_avg = int(sum(g) / len(g))
+        b_avg = int(sum(b) / len(b))
+
+        return effects.RGBToHex(r_avg, g_avg, b_avg)

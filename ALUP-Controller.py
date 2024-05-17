@@ -4,9 +4,10 @@ import ast
 import serial
 import serial.tools.list_ports as list_ports
 
+
 # led effects
 from effects import effects
-
+from inspect import getmembers, isfunction
 
 sys.path.insert(0,'Python-ALUP')
 import importlib  
@@ -115,6 +116,19 @@ def DeviceDialogue(args):
             pass
 
         elif (answers[0] == "effect"):
+            if(len(answers) <= 1):
+                print("No effect specified. Specify an effect function from effects.py or list all effects using \"effect list\"")
+                continue
+            if(answers[1] == "l"):
+                #short for 'list' but without printing the whole docstring for each effect
+                ListEffects(verbose=False)
+                continue
+            if(answers[1] == "list"):
+                ListEffects()
+                continue
+            if(len(answers) > 2 and answers[2] == "help"):
+                EffectHelp(answers[1])
+                continue
             # call function from effect library
             # the <n> parameter will be applied automatically
             # example: "effect StaticColors 0xffffff"
@@ -137,6 +151,9 @@ def DeviceDialogue(args):
                 print("setall [R] [G] [B]\t:\t Set all leds to the specified color. R/G/B are in range [0-255]")
                 print("setarray [array]\t:\t Set the leds to the given array. All unspecified leds remain unchanged")
                 print("effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py")
+                print("effect [function name] help: Print help text (docstring) for the specified effect function from effects.py")
+                print("effect l: List all available effects from effects.py")
+                print("effect list: List all available effects from effects.py together with their help text (docstring)")
                 print("clear\t\t\t:\t Set all leds to black")
                 print("Command [command]\t:\t Send an ALUP command to the device")
                 print()
@@ -210,8 +227,36 @@ def ApplyEffect(args, device):
     except AttributeError:
         print("Error: could not find function %s in effects.py" %(args[0]))
     except TypeError as e:
-        print("Error: Wrong amount of arguments given for effect %s", str(args[0]))
-        print(e)
+        print("Error: Wrong amount of arguments given for effect %s.\nEffect documentation:\n", str(args[0]))
+        print(effect.__doc__)
+        print("Note: the first parameter (n) will be auto filled and can be ignored for effect commands")
+
+
+# print the docstring of the given effect
+# @param effectName: the string name of an effect function in effects.py
+def EffectHelp(effectName):
+    # get effect function from effects.py by string name
+    effect = getattr(effects, effectName)
+    helpText = effect.__doc__ 
+    if(helpText is None):
+        print("This effect does not provide a docstring for help")
+    else:
+        print(effect.__doc__)
+
+
+def ListEffects(verbose=True):
+    # BUG: this causes empty effect list when used more than once and breaks all effects
+    functions = getmembers(effects, isfunction)
+    # filter out all private functions
+    effects = [function for function in functions if not function[0][0] == '_']
+    print("Available Effects:")
+    for effect in effects:
+        print(effect[0])
+        if(not effect[1].__doc__ is None and verbose):
+            print("\t" + effect[1].__doc__)
+        print()
+    print("Use \"effect <effect name> help\" to learn more about an effect and its parameters")
+
 
 
 # try to convert the given string to a python datatype depending on its contents 

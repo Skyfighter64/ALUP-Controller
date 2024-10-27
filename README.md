@@ -8,6 +8,9 @@ Features:
 - Set RGB colors of leds
 - Read ALUP Configuration
 
+# Note:
+This project is WIP and currently still buggy.
+
 ## Install
 Use this to clone the repo and also clone the [Python-ALUP](https://github.com/Skyfighter64/Python-ALUP) submodule:\
 `git clone --recurse-submodules https://github.com/Skyfighter64/ALUP-Controller.git`\

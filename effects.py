@@ -152,23 +152,10 @@ def _RainbowColor(i):
     @return: the 24bit hsv color
     
     """
-    @staticmethod
-    def _RainbowColor(i):
-        """geneate a single rainbow color
-        
-        @param i: the hue for the geneated color, in range [0.0, 1.0]
-        @return: the 24bit hsv color
-        
-        """
-        # get hsv color as rgb array
-        color_array = colorsys.hsv_to_rgb(i, 1.0, 1.0)
-        # scale array to range [0,255] and combine to hex color
-        color = int(color_array[0] * 255)
-        color = color << 8
-        color += int(color_array[1] * 255)
-        color = color << 8
-        color += int(color_array[2] * 255)
-        return color
+    # make sure i is within 0, 1
+    # this is needed because hsv_to_rgb behaves funky on negative values
+    # sometimes giving back negative rgb values
+    i = i % 1.0
     # get hsv color as rgb array
     color_array = colorsys.hsv_to_rgb(i, 1.0, 1.0)
     # scale array to range [0,255] and combine to hex color

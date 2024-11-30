@@ -7,7 +7,7 @@ import serial.tools.list_ports as list_ports
 
 
 # led effects
-from effects import effects
+import effects
 from inspect import getmembers, isfunction
 
 sys.path.insert(0,'Python-ALUP')
@@ -46,12 +46,13 @@ Plan:
 
 
 class AlupController(cmd.Cmd):
-    banner = """
+    intro = """
 ----------------------------------------------------------------------------
           
       ALUP Controller - CLI for basic interfacing with ALUP devices
           
-----------------------------------------------------------------------------"""
+----------------------------------------------------------------------------
+Type 'help' for available commands"""
     prompt = ">>> "
 
     def do_connect(self, args):
@@ -152,24 +153,24 @@ class AlupConnection(cmd.Cmd):
            effect [function name] help: Print help text (docstring) for the specified effect function from effects.py
            effect l | list : List all available effects from effects.py"""
         splittedArgs = args.split(" ")
-        if(len(splittedArgs) <= 1):
+        if(len(splittedArgs) <= 0):
             print("No effect specified. Specify an effect function from effects.py or list all effects using \"effect list\"")
             return
-        if(splittedArgs[1] == "l"):
+        if(splittedArgs[0] == "l"):
             #short for 'list' but without printing the whole docstring for each effect
             ListEffects(verbose=False)
             return
-        if(splittedArgs[1] == "list"):
-            ListEffects()
+        if(splittedArgs[0] == "list"):
+            ListEffects(verbose=True)
             return
-        if(len(splittedArgs) > 2 and splittedArgs[2] == "help"):
-            EffectHelp(splittedArgs[1])
+        if(len(splittedArgs) > 1 and splittedArgs[1] == "help"):
+            EffectHelp(splittedArgs[0])
             return
         # call function from effect library
         # the <n> parameter will be applied automatically
         # example: "effect StaticColors 0xffffff"
         #           "effect Rainbow"
-        ApplyEffect(splittedArgs[1:], self.device)
+        ApplyEffect(splittedArgs, self.device)
    
 
     def do_disconnect(self, args):
@@ -193,13 +194,19 @@ class AlupConnection(cmd.Cmd):
         print("Cleared and Disconnected")
         return True
     
-    
-    
+
+#-----------------------------------------------------------------------------
+# 
+#            Helper functions which are not part of the CLI
+#
+#-----------------------------------------------------------------------------
+
 
 # apply an effect from the effects.py module
 # the args parameter has to contain the function name of the effect as first argument
 # @param args: [<effect function name in effects.py>, <optional parameters for effect>...] where each element is a string
 def ApplyEffect(args, device):
+    global effects
     try:
         # HACK: allow any function from effects.py to be executed. This 
         # allows maximum flexibility but might be a bad practice
@@ -227,6 +234,7 @@ def ApplyEffect(args, device):
 # print the docstring of the given effect
 # @param effectName: the string name of an effect function in effects.py
 def EffectHelp(effectName):
+    global effects
     # get effect function from effects.py by string name
     effect = getattr(effects, effectName)
     helpText = effect.__doc__ 
@@ -237,6 +245,7 @@ def EffectHelp(effectName):
 
 
 def ListEffects(verbose=True):
+    global effects
     # BUG: this causes empty effect list when used more than once and breaks all effects
     functions = getmembers(effects, isfunction)
     # filter out all private functions
@@ -287,7 +296,7 @@ def ScanForDevices():
         print("No ports available")
         return []
 
-    print("Format:\n[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % ("name", "device description", "hardware id", "serial number", "product name", "product id", "manufacturer", "vendor id"))
+    #print("Format:\n[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % ("name", "device description", "hardware id", "serial number", "product name", "product id", "manufacturer", "vendor id"))
     print("\nAvailable Serial Ports:")
     for port in ports:
         print("[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % (port.device, port.description, port.hwid, port.serial_number, port.product, port.pid, port.manufacturer, port.vid))

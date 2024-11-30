@@ -247,7 +247,6 @@ def EffectHelp(effectName):
 def ListEffects(verbose=True):
     global effects
     functions = getmembers(effects, isfunction)
-    print(functions)
     # filter out all private functions
     effect_functions = [function for function in functions if not function[0][0] == '_']
     print("Available Effects:")

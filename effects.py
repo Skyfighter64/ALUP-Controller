@@ -32,7 +32,8 @@ def SingleColor(n: int, color : int) -> list[int]:
     
     Parameters:
     n: size of the returned array
-    color: color to apply to all array elements
+    color: color to apply to all array elements as hex value: 0xRRGGBB
+           Examples: 0xff0000: red, 0x00ff00: green, 0x0000ff: blue
 
     Returns:
     return_type: An array containing the given color n times 
@@ -51,15 +52,15 @@ def Gradient(n: int, *colors) -> list[int]:
     to the neighboring colors for each section.
     
     Here, the first color will be at the first LED, the last color at the last LED, 
-    and every color inbetween will be distributed evenly on all n leds.
+    and every color in between will be distributed evenly on all n leds.
     The sections between two colors will be filled with a gradient.
 
     Returns:
-    return_type: An array containing a gradient of all neighbours in the given colors
+    return_type: An array containing a gradient of all neighbors in the given colors
     """
 
     if(len(colors) == 0):
-        # at least one color is neede for the gradient effect
+        # at least one color is needed for the gradient effect
         # return only black color
         return [0] * n
     if(len(colors) == 1):
@@ -100,7 +101,7 @@ def _InterpolateColors(fraction: float, firstColor, secondColor):
     
     Parameters:
     fraction:  the interpolation fraction. 0 for the first color, 1 for the second.
-                    Values inbetween for a mix of both colors.
+                    Values in between for a mix of both colors.
     firstColor: The interpolation color for fraction = 0 in hex format
     secondColor: The interpolation color for fraction = 1 in hex format
     Returns:
@@ -131,18 +132,10 @@ def Rainbow(n, offset = 0, scale = 1.0):
     Returns:
     return_type: An array containing a rainbow effect for n LEDs
     """
-    # BUG: this effect is broken sometimes; returns values which are too big
-    # example : Rainbow(10,5,1)
     colors = []
-    print("n " + str(n))
-    print("offset " + str(offset))
-    print("scale " + str(scale))
     for i in range(n):
         colors.append(_RainbowColor(((i + offset)/n) * scale))
-        print("Indice: " +  str(((i + offset)/n) * scale))
-    print("Rainbow colors: " + str(colors))
     return colors
-
 
 
 def _RainbowColor(i):

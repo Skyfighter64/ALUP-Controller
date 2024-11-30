@@ -94,7 +94,8 @@ class AlupConnection(cmd.Cmd):
         super(AlupConnection, self).__init__()
     
     def __del__(self):
-        self.device.Disconnect()
+        if self.device.connected:
+            self.device.Disconnect()
 
     def do_config(self, args):
         """Print the ALUP configuration of the active device"""

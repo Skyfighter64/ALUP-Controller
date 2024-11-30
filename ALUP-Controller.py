@@ -93,6 +93,9 @@ class AlupConnection(cmd.Cmd):
         self.prompt = "(%s)> " % (com_port)
         super(AlupConnection, self).__init__()
     
+    def __del__(self):
+        self.device.Disconnect()
+
     def do_config(self, args):
         """Print the ALUP configuration of the active device"""
         print(self.device.configuration)

@@ -271,24 +271,6 @@ def _castString(s):
 
 
 
-# convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb
-def RGBToHex(r,g,b):
-    color = r
-    color = color << 8
-    color += g
-    color = color << 8
-    color += b
-    return color
-
-# convert a hex color in the format 0xrrggbb to (r,g,b) values in range 0-255
-def HexToRGB(hex_color):
-    r = (hex_color >> 16) & 0xFF
-    g = (hex_color >> 8) & 0xFF
-    b = hex_color & 0xFF
-    return r,g,b
-
-
-
 def ScanForDevices():
     print("Scanning for connected devices")
     ports = list_ports.comports()

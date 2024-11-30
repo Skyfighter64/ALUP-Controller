@@ -12,7 +12,7 @@ All effect functions need to have the signature:
         return_type: An array containing the effect for n LEDs 
 
 All color inputs and outputs are in hexadecimal format 0xRRGGBB
-Use HexToRGB(...) and RGBToHex(...) for conversion if needed
+Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed
         
 For n == 0, an effect should return an empty array: [] 
 
@@ -109,15 +109,15 @@ def _InterpolateColors(fraction: float, firstColor, secondColor):
     """       
     
     # convert the hex color to rgb values
-    r1, g1, b1 = HexToRGB(firstColor)
-    r2, g2, b2 = HexToRGB(secondColor)
+    r1, g1, b1 = _HexToRGB(firstColor)
+    r2, g2, b2 = _HexToRGB(secondColor)
 
     # interpolate the r, g and b values
     r3 = int(r1 * (1 - fraction) + r2 * fraction)
     g3 = int(g1 * (1 - fraction) + g2 * fraction)
     b3 = int(b1 * (1 - fraction) + b2 * fraction)
 
-    return RGBToHex(r3, g3, b3)
+    return _RGBToHex(r3, g3, b3)
 
 
 
@@ -162,7 +162,7 @@ def _RainbowColor(i):
 
 
 # convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb
-def RGBToHex(r, g, b):
+def _RGBToHex(r, g, b):
     color = r
     color = color << 8
     color += g
@@ -173,7 +173,7 @@ def RGBToHex(r, g, b):
 
 
 # convert a hex color in the format 0xrrggbb to (r,g,b) values in range 0-255
-def HexToRGB(hex_color):
+def _HexToRGB(hex_color):
     r = (hex_color >> 16) & 0xFF
     g = (hex_color >> 8) & 0xFF
     b = hex_color & 0xFF
@@ -191,7 +191,7 @@ def _Average(values):
     b = []
     
     for value in values:
-        _r, _g, _b = HexToRGB(value)
+        _r, _g, _b = _HexToRGB(value)
         r.append(_r)
         g.append(_g)
         b.append(_b)
@@ -200,4 +200,4 @@ def _Average(values):
     g_avg = int(sum(g) / len(g))
     b_avg = int(sum(b) / len(b))
 
-    return RGBToHex(r_avg, g_avg, b_avg)
+    return _RGBToHex(r_avg, g_avg, b_avg)

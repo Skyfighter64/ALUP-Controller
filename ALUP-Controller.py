@@ -246,12 +246,12 @@ def EffectHelp(effectName):
 
 def ListEffects(verbose=True):
     global effects
-    # BUG: this causes empty effect list when used more than once and breaks all effects
     functions = getmembers(effects, isfunction)
+    print(functions)
     # filter out all private functions
-    effects = [function for function in functions if not function[0][0] == '_']
+    effect_functions = [function for function in functions if not function[0][0] == '_']
     print("Available Effects:")
-    for effect in effects:
+    for effect in effect_functions:
         print(effect[0])
         if(not effect[1].__doc__ is None and verbose):
             print("\t" + effect[1].__doc__)

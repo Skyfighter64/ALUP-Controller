@@ -1,12 +1,13 @@
 import sys
 import ast
+import cmd
 
 import serial
 import serial.tools.list_ports as list_ports
 
 
 # led effects
-from effects import effects
+import effects
 from inspect import getmembers, isfunction
 
 sys.path.insert(0,'Python-ALUP')
@@ -43,171 +44,166 @@ Plan:
 
 """
 
-def main():
-    print("""
+
+class AlupController(cmd.Cmd):
+    intro = """
 ----------------------------------------------------------------------------
           
-      ALUP Controller - Suite for basic interfacing with ALUP devices
+      ALUP Controller - CLI for basic interfacing with ALUP devices
           
-----------------------------------------------------------------------------""")
-    # main loop
-    while(True):
-        answer = input("> ").strip()
-        if(answer.startswith("connect")):
-            # read extra arguments
-            args = answer.split(" ")[1:]      
-            DeviceDialogue(args)
-        elif(answer == "list"):
-            ScanForDevices()
-        elif(answer == "exit"):
-            exit()
-        elif(answer == "help"):
-            print("\n--- Available Commands: ---")
-            print("connect\nconnect [com] [baud]\t:\t Connect to serial device")
-            print("list\t\t\t:\t List available serial devices")
-            print("exit\t\t\t:\t Exit program")
-            print()
-        else:
-            print("Unknown Command. Type \"help\" for help")
+----------------------------------------------------------------------------
+Type 'help' for available commands"""
+    prompt = ">>> "
 
-def DeviceDialogue(args):
-    device, com_port = ConnectionDialogue(args)
-    # check if a valid connection was established
-    if(device is None):
-        return
-    
-    while(True):
-        answer = input("%s@%s> " % (device.configuration.deviceName, com_port)).strip()
-        answers = answer.split(" ")
-
-        if(answers[0] == "disconnect" or answers[0] == "exit"):
-            print("disconnecting from device...")
-            if(answers[0] == "exit"):
-                device.SetCommand(Command.CLEAR)
-                device.Send()
-            device.Disconnect()
-            print("Disconnected")
-            return
-        elif(answers[0] == "set" and len(answers) >= 5 ):
-            try:
-                led_index = int(answers[1])
-                # read in rgb colors and make sure they are within 0-255
-                r = max(min(int(answers[2]),255),0)
-                g = max(min(int(answers[3]),255),0)
-                b = max(min(int(answers[4]),255),0)
-                colors = [RGBToHex(r,g,b)]
-                device.SetColors(colors)
-                device.frame.offset = led_index
-                device.Send()
-
-            except ValueError:
-                print("index/R/G/B Values have to be integer")
-        elif(answers[0] == "setall"):
-            # read in rgb colors and make sure they are within 0-255
-            r = max(min(int(answers[1]),255),0)
-            g = max(min(int(answers[2]),255),0)
-            b = max(min(int(answers[3]),255),0)
-            colors = [RGBToHex(r,g,b)] * device.configuration.ledCount
-            device.SetColors(colors)
-            device.Send()
-
-        elif(answers[0] == "setarray"):
-            #todo
-            pass
-
-        elif (answers[0] == "effect"):
-            if(len(answers) <= 1):
-                print("No effect specified. Specify an effect function from effects.py or list all effects using \"effect list\"")
-                continue
-            if(answers[1] == "l"):
-                #short for 'list' but without printing the whole docstring for each effect
-                ListEffects(verbose=False)
-                continue
-            if(answers[1] == "list"):
-                ListEffects()
-                continue
-            if(len(answers) > 2 and answers[2] == "help"):
-                EffectHelp(answers[1])
-                continue
-            # call function from effect library
-            # the <n> parameter will be applied automatically
-            # example: "effect StaticColors 0xffffff"
-            #           "effect Rainbow"
-            ApplyEffect(answers[1:], device)
-        elif(answers[0] == "clear"):
-            # needing to set command manually; Python-ALUP should implement a device.Clear() command
-            device.SetCommand(Command.CLEAR)
-            device.Send()
-            print("Sent Clear command")
-        elif(answers[0] == "config"): 
-            print(device.configuration)
-
-        elif(answer == "help"):
-                print("\n--- Available Commands: ---")
-                print("config\t\t\t: Print the ALUP configuration of the device")
-                print("disconnect\t:\t Terminate connection to device without resetting LEDs")
-                print("exit\t\t\t:\t Set LEDs to black and terminate connection to device")
-                print("set [i] [R] [G] [B]\t:\t Set led with index i to the specified color (Starting at 0). R/G/B are in range [0-255]")
-                print("setall [R] [G] [B]\t:\t Set all leds to the specified color. R/G/B are in range [0-255]")
-                print("setarray [array]\t:\t Set the leds to the given array. All unspecified leds remain unchanged")
-                print("effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py")
-                print("effect [function name] help: Print help text (docstring) for the specified effect function from effects.py")
-                print("effect l: List all available effects from effects.py")
-                print("effect list: List all available effects from effects.py together with their help text (docstring)")
-                print("clear\t\t\t:\t Set all leds to black")
-                print("Command [command]\t:\t Send an ALUP command to the device")
-                print()
-        else:
-            print("Unknown Command  \"%s\" Type \"help\" for help" % ( answers[0]))
-
-
-def ConnectionDialogue(args):
-    # list available devices
-    if (len(args) <= 0):
-        ScanForDevices()
-    # interact with user to determine com port and baud rate
-    while(True):
-        # auto fill com port from args if already provided
-        if(len(args) >= 1):
-            answer = args[0]
-        else:
-            print("Enter device name to connect to:")
-            answer = input("Connect> ").strip()
-
-        if (answer == "list"):
-            ScanForDevices()
-        elif (answer == "exit"):
-            print("Aborting connection dialogue...")
-            return None, ""
-        
-        com_port = answer
-        # autofill if baud rate is provided by args
-        if(len(args) >= 2):
-            baud_str = args[1]
-        else:
-            print("Enter baud rate:")
-            baud_str = input("Connect>baud> ").strip()
-        
-        # check if args are valid and try to connect
+    def do_connect(self, args):
+        """connect\nconnect [com] [baud]\t:\t Connect to serial device"""
         try:
-            baud = int(baud_str)
-        except ValueError:
-            print(">>> Invalid baud rate. Has to be a positive integer value.\n>>> Type \"list\" to list all devices or \"exit\" to return")
-            continue
-        try:
+            # extract com port and baud
+            splittedArgs = args.split(" ")
+            com_port = splittedArgs[0]
+            baud = 115200
+
+            if len(splittedArgs) > 1:
+                baud = int(splittedArgs[1])
+
+            # create new ALUP device
             device = Device()
             device.SerialConnect(com_port, baud)
-            return device, com_port
-        except serial.serialutil.SerialException:
-            # BUG: This is repeated/spammed in loop if printed
-            print("\n>>> Error: Could not connect to device: Device not found.\n>>> Type \"list\" to list all devices or \"exit\" to return")
+            conn = AlupConnection(device, com_port)
+            conn.cmdloop()
 
+        except serial.serialutil.SerialException:
+            print("\nError: Could not connect to device: Device not found.\nType \"list\" to list all devices or \"exit\" to return")
+
+    def do_list(self, args):
+        """list\t\t\t:\t List available serial devices"""
+        ScanForDevices()
+    def do_exit(self, args):
+        """exit\t\t\t:\t Exit program"""
+        return True
+
+
+
+
+
+
+class AlupConnection(cmd.Cmd):
+    def __init__(self, device : Device,  com_port : str):   
+        self.device = device
+        self.prompt = "(%s)> " % (com_port)
+        super(AlupConnection, self).__init__()
+    
+    def do_config(self, args):
+        """Print the ALUP configuration of the active device"""
+        print(self.device.configuration)
+    def do_command(self, args):
+        """Command [command]\t:\t Send an ALUP command to the device"""
+        # todo: implement
+        pass
+
+
+    def do_set(self, args):
+        """set [i] [color]\t:\t Set led with index i to the specified color (Starting at 0).[color] is a hex 0xRRGGBB color value, eg. 0xff00ff"""
+        try:
+            splittedArgs = args.split(" ")
+            led_index = int(splittedArgs[0])
+            colors = [int(splittedArgs[1], 16)]
+            self.device.SetColors(colors)
+            self.device.frame.offset = led_index
+            self.device.Send()
+        except ValueError:
+            print("index/color Values have to be integer")
+        except IndexError:
+            print("Wrong amount of arguments given. Expected [i : int], [color : int].\n Type 'help set' for more")
+
+
+    def do_setrange(self, args):
+        """setrange [range] [color]\t:\t Set the leds to the given array. All unspecified leds remain unchanged"""
+        pass
+
+    def do_repeat(self, args):
+        # todo: function to repeat array of colors until end of led strip
+        pass
+
+    def do_setall(self, args):
+        """setall [color]\t:\t Set all leds to the specified color. [color] is a hex 0xRRGGBB color value, eg. 0xff00ff"""
+        try:
+            splittedArgs = args.split(" ")
+            colors = [int(splittedArgs[0], 16)] * self.device.configuration.ledCount
+            self.device.SetColors(colors)
+            self.device.Send()
+        except ValueError:
+            print("color Value has to be integer. Expected [i : int], [color : int].\n Type 'help set' for more")
+        except IndexError:
+            print("Invalid number of arguments given")
+
+
+    def do_clear(self, args):
+        """Set all LEDs to black"""
+        self.device.SetCommand(Command.CLEAR)
+        self.device.Send()
+        print("Cleared all LEDs")
+
+
+    def do_effect(self, args):
+        """effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py
+           effect [function name] help: Print help text (docstring) for the specified effect function from effects.py
+           effect l | list : List all available effects from effects.py"""
+        splittedArgs = args.split(" ")
+        if(len(splittedArgs) <= 0):
+            print("No effect specified. Specify an effect function from effects.py or list all effects using \"effect list\"")
+            return
+        if(splittedArgs[0] == "l"):
+            #short for 'list' but without printing the whole docstring for each effect
+            ListEffects(verbose=False)
+            return
+        if(splittedArgs[0] == "list"):
+            ListEffects(verbose=True)
+            return
+        if(len(splittedArgs) > 1 and splittedArgs[1] == "help"):
+            EffectHelp(splittedArgs[0])
+            return
+        # call function from effect library
+        # the <n> parameter will be applied automatically
+        # example: "effect StaticColors 0xffffff"
+        #           "effect Rainbow"
+        ApplyEffect(splittedArgs, self.device)
+   
+
+    def do_disconnect(self, args):
+        """Terminate connection to device without resetting LEDs"""
+        self.device.Disconnect()
+        print("Disconnected")
+        return True
+
+
+    def do_dc(self, args):
+        """alias for 'disconnect'"""
+        self.do_disconnect(args)
+        return True
+
+
+    def do_exit(self, args):
+        """Set LEDs to black and terminate connection to device"""
+        self.device.SetCommand(Command.CLEAR)
+        self.device.Send()
+        self.device.Disconnect()
+        print("Cleared and Disconnected")
+        return True
+    
+
+#-----------------------------------------------------------------------------
+# 
+#            Helper functions which are not part of the CLI
+#
+#-----------------------------------------------------------------------------
 
 
 # apply an effect from the effects.py module
 # the args parameter has to contain the function name of the effect as first argument
 # @param args: [<effect function name in effects.py>, <optional parameters for effect>...] where each element is a string
 def ApplyEffect(args, device):
+    global effects
     try:
         # HACK: allow any function from effects.py to be executed. This 
         # allows maximum flexibility but might be a bad practice
@@ -229,12 +225,13 @@ def ApplyEffect(args, device):
     except TypeError as e:
         print("Error: Wrong amount of arguments given for effect %s.\nEffect documentation:\n", str(args[0]))
         print(effect.__doc__)
-        print("Note: the first parameter (n) will be auto filled and can be ignored for effect commands")
+        print("Note: the first parameter (n) will be auto filled and needs to be ignored for effect commands")
 
 
 # print the docstring of the given effect
 # @param effectName: the string name of an effect function in effects.py
 def EffectHelp(effectName):
+    global effects
     # get effect function from effects.py by string name
     effect = getattr(effects, effectName)
     helpText = effect.__doc__ 
@@ -245,12 +242,13 @@ def EffectHelp(effectName):
 
 
 def ListEffects(verbose=True):
-    # BUG: this causes empty effect list when used more than once and breaks all effects
+    global effects
     functions = getmembers(effects, isfunction)
+    print(functions)
     # filter out all private functions
-    effects = [function for function in functions if not function[0][0] == '_']
+    effect_functions = [function for function in functions if not function[0][0] == '_']
     print("Available Effects:")
-    for effect in effects:
+    for effect in effect_functions:
         print(effect[0])
         if(not effect[1].__doc__ is None and verbose):
             print("\t" + effect[1].__doc__)
@@ -262,6 +260,8 @@ def ListEffects(verbose=True):
 # try to convert the given string to a python datatype depending on its contents 
 def _castString(s):
     try:
+        # note: even though literal_eval is considered mostly safe, do not use this in unintended places.
+        # this is only needed to cast string arguments from the CLI to python parameters for the effects functions.
         return ast.literal_eval(s)
     except ValueError:
         print("Warning: Could not convert value %s into native type; Will be interpreted as string" %(s))
@@ -286,16 +286,6 @@ def HexToRGB(hex_color):
     return r,g,b
 
 
-# options: array of string options which the answer should be from
-# error text: text to show the user for invalid answers
-def GetAnswer(options, errortext):
-    while(True):
-        answer = input()
-        if(answer.strip() not in options):
-            print(errortext)
-        else:
-            return answer
-
 
 def ScanForDevices():
     print("Scanning for connected devices")
@@ -304,13 +294,13 @@ def ScanForDevices():
     if (len(ports) == 0):
         print("No ports available")
         return []
-    
-    
-    print("Format:\n[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % ("name", "device description", "hardware id", "serial number", "product name", "product id", "manufacturer", "vendor id"))
+
+    #print("Format:\n[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % ("name", "device description", "hardware id", "serial number", "product name", "product id", "manufacturer", "vendor id"))
     print("\nAvailable Serial Ports:")
     for port in ports:
         print("[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % (port.device, port.description, port.hwid, port.serial_number, port.product, port.pid, port.manufacturer, port.vid))
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    AlupController().cmdloop()

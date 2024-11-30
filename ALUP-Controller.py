@@ -103,40 +103,37 @@ class AlupConnection(cmd.Cmd):
 
 
     def do_set(self, args):
-        """set [i] [R] [G] [B]\t:\t Set led with index i to the specified color (Starting at 0). R/G/B are in range [0-255]"""
+        """set [i] [color]\t:\t Set led with index i to the specified color (Starting at 0).[color] is a hex 0xRRGGBB color value, eg. 0xff00ff"""
         try:
             splittedArgs = args.split(" ")
             led_index = int(splittedArgs[0])
-            # read in rgb colors and make sure they are within 0-255
-            r = max(min(int(splittedArgs[1]),255),0)
-            g = max(min(int(splittedArgs[2]),255),0)
-            b = max(min(int(splittedArgs[3]),255),0)
-            colors = [RGBToHex(r,g,b)]
+            colors = [int(splittedArgs[1], 16)]
             self.device.SetColors(colors)
             self.device.frame.offset = led_index
             self.device.Send()
         except ValueError:
-            print("index/R/G/B Values have to be integer")
+            print("index/color Values have to be integer")
+        except IndexError:
+            print("Wrong amount of arguments given. Expected [i : int], [color : int].\n Type 'help set' for more")
 
 
-    def do_setarray(self, args):
-        """setarray [array]\t:\t Set the leds to the given array. All unspecified leds remain unchanged"""
+    def do_setrange(self, args):
+        """setrange [range] [color]\t:\t Set the leds to the given array. All unspecified leds remain unchanged"""
         pass
 
+    def do_repeat(self, args):
+        # todo: function to repeat array of colors until end of led strip
+        pass
 
     def do_setall(self, args):
-        """setall [R] [G] [B]\t:\t Set all leds to the specified color. R/G/B are in range [0-255]"""
+        """setall [color]\t:\t Set all leds to the specified color. [color] is a hex 0xRRGGBB color value, eg. 0xff00ff"""
         try:
             splittedArgs = args.split(" ")
-            # read in rgb colors and make sure they are within 0-255
-            r = max(min(int(splittedArgs[0]),255),0)
-            g = max(min(int(splittedArgs[1]),255),0)
-            b = max(min(int(splittedArgs[2]),255),0)
-            colors = [RGBToHex(r,g,b)] * self.device.configuration.ledCount
+            colors = [int(splittedArgs[0], 16)] * self.device.configuration.ledCount
             self.device.SetColors(colors)
             self.device.Send()
         except ValueError:
-            print("index/R/G/B Values have to be integer")
+            print("color Value has to be integer. Expected [i : int], [color : int].\n Type 'help set' for more")
         except IndexError:
             print("Invalid number of arguments given")
 
@@ -145,7 +142,7 @@ class AlupConnection(cmd.Cmd):
         """Set all LEDs to black"""
         self.device.SetCommand(Command.CLEAR)
         self.device.Send()
-        print("Sent Clear command")
+        print("Cleared all LEDs")
 
 
     def do_effect(self, args):
@@ -228,7 +225,7 @@ def ApplyEffect(args, device):
     except TypeError as e:
         print("Error: Wrong amount of arguments given for effect %s.\nEffect documentation:\n", str(args[0]))
         print(effect.__doc__)
-        print("Note: the first parameter (n) will be auto filled and can be ignored for effect commands")
+        print("Note: the first parameter (n) will be auto filled and needs to be ignored for effect commands")
 
 
 # print the docstring of the given effect
@@ -263,6 +260,8 @@ def ListEffects(verbose=True):
 # try to convert the given string to a python datatype depending on its contents 
 def _castString(s):
     try:
+        # note: even though literal_eval is considered mostly safe, do not use this in unintended places.
+        # this is only needed to cast string arguments from the CLI to python parameters for the effects functions.
         return ast.literal_eval(s)
     except ValueError:
         print("Warning: Could not convert value %s into native type; Will be interpreted as string" %(s))

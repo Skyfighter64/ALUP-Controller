@@ -138,6 +138,20 @@ def Rainbow(n, offset = 0, scale = 1.0):
     return colors
 
 
+
+def Christmas(n):
+    """
+    Generate red and green christmas lights
+    Parameters:
+    n: size of the returned RGB array (number of LEDs)
+
+    Returns:
+    return_type: An array containing a rainbow effect for n LEDs
+    """
+    pattern = [0xff0000, 0x00ff00]
+    return (pattern * int(n/len(pattern)) )[:n]
+
+
 def _RainbowColor(i):
     """generate a single rainbow color
     

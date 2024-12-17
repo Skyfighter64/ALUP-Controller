@@ -225,11 +225,13 @@ def ApplyEffect(args, device):
         device.SetColors(colors)
         device.Send()
     except AttributeError:
-        print("Error: could not find function %s in effects.py" %(args[0]))
+        print("Error: could not find function '%s' in effects.py" %(args[0]))
     except TypeError as e:
-        print("Error: Wrong amount of arguments given for effect %s.\nEffect documentation:\n", str(args[0]))
+        print("Error: Wrong amount of arguments given for effect '%s'.\nEffect documentation:\n" % str(args[0]))
         print(effect.__doc__)
         print("Note: the first parameter (n) will be auto filled and needs to be ignored for effect commands")
+        print("Error Details:")
+        print(e)
 
 
 # print the docstring of the given effect

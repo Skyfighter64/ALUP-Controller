@@ -1,6 +1,5 @@
 import unittest
-
-from effects import effects
+import effects
 
 class TestEffects(unittest.TestCase):
     def test_SingleColor(self):
@@ -68,18 +67,26 @@ class TestEffects(unittest.TestCase):
 
 
     def test_RGBToHex(self):
-        self.assertEqual(effects.RGBToHex(255,255,255), 0xffffff)
-        self.assertEqual(effects.RGBToHex(0,0,0), 0x000000)
-        self.assertEqual(effects.RGBToHex(118,74,190), 0x764ABE)
+        self.assertEqual(effects._RGBToHex(255,255,255), 0xffffff)
+        self.assertEqual(effects._RGBToHex(0,0,0), 0x000000)
+        self.assertEqual(effects._RGBToHex(118,74,190), 0x764ABE)
 
     def test_HexToRGB(self):
-        self.assertEqual(effects.HexToRGB(0xffffff), (255,255,255))
-        self.assertEqual(effects.HexToRGB(0x000000), (0,0,0))
-        self.assertEqual(effects.HexToRGB(0x764ABE), (118,74,190))
+        self.assertEqual(effects._HexToRGB(0xffffff), (255,255,255))
+        self.assertEqual(effects._HexToRGB(0x000000), (0,0,0))
+        self.assertEqual(effects._HexToRGB(0x764ABE), (118,74,190))
 
 
     def test_Average(self):
         self.assertEqual(effects._Average([0x000000, 0xffffff]), 0x7f7f7f)
+
+    
+    def test_repeat(self):
+        self.assertEqual(effects.Repeat(10, []), [])
+        self.assertEqual(effects.Repeat(3, [0xff]), [0xff, 0xff, 0xff])
+        self.assertEqual(effects.Repeat(3, [0xff, 0x00]), [0xff, 0x00, 0xff])
+        self.assertEqual(effects.Repeat(3, [0xff, 0x00]), [0xff, 0x00, 0xff])
+        self.assertEqual(effects.Repeat(1, [0xff, 0x00]), [0xff])
 
 if __name__ == '__main__':
     unittest.main()

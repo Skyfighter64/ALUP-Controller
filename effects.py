@@ -149,7 +149,7 @@ def Christmas(n):
     return_type: An array containing a rainbow effect for n LEDs
     """
     pattern = [0xff0000, 0x00ff00]
-    return (pattern * int(n/len(pattern)) )[:n]
+    return Repeat(pattern)
 
 
 def _RainbowColor(i):
@@ -173,6 +173,19 @@ def _RainbowColor(i):
     color += int(color_array[2] * 255)
     return color
 
+
+def Repeat(n, pattern):
+    """
+    Repeat a pattern until it fills an array of length n
+    @param n: the size of the returned array
+    @param pattern: an array of hex colors describing the pattern to repeat
+
+    @return: an array containing the pattern repeated with n elements. 
+             If the pattern does not fit it is cut off.
+    """
+    if len(pattern) == 0:
+        return []
+    return [pattern[i % len(pattern)] for i in range(n)]
 
 
 # convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb

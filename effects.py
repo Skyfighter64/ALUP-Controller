@@ -1,24 +1,37 @@
-"""A collection of functions generating RGB-Effects.
+"""
+effects.py
 
-All effect functions need to have the signature:
-        <description>
-        
-        Parameters:
-        n: size of the returned array
-        <more params>: description 
-        ...
+Provides a collection of static RGB effects for LEDs.
 
-        Returns:
-        return_type: An array containing the effect for n LEDs 
+Effects are functions which generate a static color effect for LEDs.
 
-All color inputs and outputs are in hexadecimal format 0xRRGGBB
-Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed
-        
-For n == 0, an effect should return an empty array: [] 
 
-Always specify default values for function arguments if possible
 
-All effects should have a python docstring specifying all input parameters.
+--------------------------------------------------
+            Adding new Effects
+--------------------------------------------------
+
+Create a new module function with the name of the 
+effect as function name. 
+
+It needs to take at least one argument n and return 
+an array of size n containing hexadecimal RGB color values.
+
+Additional Parameters:
+It is possible to define additional parameters for an effect in case n is not
+enough. It is recommended to specify a default value for all extra parameters used.
+
+To provide help to end users, add a docstring to effect functions.
+
+
+--------------------------------------------------
+                    Notes
+--------------------------------------------------
+- All color inputs and outputs are in hexadecimal format 0xRRGGBB
+- Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed      
+- For n == 0, an effect should return an empty array: [] 
+- Specify default values for function arguments if possible
+
 """
 
 
@@ -138,20 +151,6 @@ def Rainbow(n, offset = 0, scale = 1.0):
     return colors
 
 
-
-def Christmas(n):
-    """
-    Generate red and green christmas lights
-    Parameters:
-    n: size of the returned RGB array (number of LEDs)
-
-    Returns:
-    return_type: An array containing a rainbow effect for n LEDs
-    """
-    pattern = [0xf71507,0xff6220,0x75ff33,0x33ff04]
-    return Repeat(n, pattern)
-
-
 def _RainbowColor(i):
     """generate a single rainbow color
     
@@ -172,6 +171,19 @@ def _RainbowColor(i):
     color = color << 8
     color += int(color_array[2] * 255)
     return color
+
+
+def Christmas(n):
+    """
+    Generate red and green christmas lights
+    Parameters:
+    n: size of the returned RGB array (number of LEDs)
+
+    Returns:
+    return_type: An array containing a rainbow effect for n LEDs
+    """
+    pattern = [0xf71507,0xff6220,0x75ff33,0x33ff04]
+    return Repeat(n, pattern)
 
 
 def Repeat(n, pattern):

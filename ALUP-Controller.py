@@ -151,9 +151,13 @@ class AlupConnection(cmd.Cmd):
 
 
     def do_effect(self, args):
-        """effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py
-           effect [function name] help: Print help text (docstring) for the specified effect function from effects.py
-           effect l | list : List all available effects from effects.py"""
+        """
+        Apply a color effect from effects.py to the LEDs
+        Usage:
+        effect [function name] [optional params]\t:\t Apply an effect from the effects.py library. [Function name] is the name of the effect function in effects.py
+        effect [function name] help: Print help text (docstring) for the specified effect function from effects.py
+        effect l | list : List all available effects from effects.py
+        """
         splittedArgs = args.split(" ")
         if(len(splittedArgs) <= 0):
             print("No effect specified. Specify an effect function from effects.py or list all effects using \"effect list\"")
@@ -176,14 +180,32 @@ class AlupConnection(cmd.Cmd):
    
 
     def do_animation(self, args):
-        # initialize animator for the device with 10fps
-        anim = animator.Animator(self.device, 10)
-        print("Playing test animation")
-        try:
-            anim.Play(animator.blink, 0x0000ff, 1)
-        except KeyboardInterrupt:
-            print("Ctl + c pressed. Stopping animation.")
+        """
+        Apply an animation function from animator.py to the LEDs.
+        Press 'Ctl + c' to stop.
+        Usage:
+        animation [function name] [optional params]\t:\t Apply an animation from the animator.py library. [Function name] is the name of the animation
+        animation l | list : List all available animations
+        """
+        splittedArgs = args.split(" ")
+        if(len(splittedArgs) <= 0):
+            print("No animation specified. Specify an animation function from animator.py or list all animations using \"animation list\"")
             return
+        if(splittedArgs[0] == "l"):
+            #short for 'list' but without printing the whole docstring for each effect
+            ListAnimations(verbose=False)
+            return
+        if(splittedArgs[0] == "list"):
+            AnimationHelp(verbose=True)
+            return
+        if(len(splittedArgs) > 1 and splittedArgs[1] == "help"):
+            AnimationHelp(splittedArgs[0])
+            return
+        # call function from effect library
+        # the <n> parameter will be applied automatically
+        # example: "effect StaticColors 0xffffff"
+        #           "effect Rainbow"
+        ApplyAnimation(self.device, splittedArgs)
 
 
     def do_disconnect(self, args):
@@ -269,6 +291,73 @@ def ListEffects(verbose=True):
         print(effect[0])
         if(not effect[1].__doc__ is None and verbose):
             print("\t" + effect[1].__doc__)
+        print()
+    print("Use \"effect <effect name> help\" to learn more about an effect and its parameters")
+
+
+
+# apply an animation from the animator.py module
+# the args parameter has to contain the function name of the animation as first argument and all non-optional function arguments except n and t.
+# For more info see animator.py
+# @param args: array of string: [<animation function name in animator.py>, <optional parameters for animation function>...]
+def ApplyAnimation(device, args):
+    global animator
+    try:
+        # HACK: allow any function from the animator.py module to be executed. This 
+        # allows maximum flexibility but might be a bad practice
+        # Arguments for functions may be specified in args as string array
+        # they are converted into python datatypes automatically
+
+        # try to automatically cast string arguments to their respective native types
+        castedArgs = [_castString(arg) for arg in args[1:]]
+
+        # get animation function from animator.py by string name
+        animation = getattr(animator, args[0])
+       
+        # initialize animator for the device with 10fps
+        anim = animator.Animator(device, 10)
+        print("Playing test animation")
+        try:
+            # Play the animation. Note: this function is blocking indefinitely
+            anim.Play(animation, *castedArgs)
+        except KeyboardInterrupt:
+            print("Ctl + c pressed. Stopping animation.")
+            return
+
+    except AttributeError:
+        print("Error: could not find function '%s' in animator.py" %(args[0]))
+    except TypeError as e:
+        print("Error: Wrong amount of arguments given for animation '%s'.\nAnimation documentation:\n" % str(args[0]))
+        print(anim.__doc__)
+        print("Note: the first two parameters (n, t) will be auto filled and need to be ignored for animation functions")
+        print("Error Details:")
+        print(e)
+
+
+
+# provide help by printint the docstring of the given animation
+# @param name: the string name of an animation function in animator.py
+def AnimationHelp(name):
+    global animator
+    # get effect function from effects.py by string name
+    animation = getattr(animator, name)
+    helpText = animation.__doc__ 
+    if(helpText is None):
+        print("This effect does not provide a docstring for help")
+    else:
+        print(animation.__doc__)
+
+
+def ListAnimations(verbose=True):
+    global animator
+    functions = getmembers(animator, isfunction)
+    # filter out all private functions
+    animation_functions = [function for function in functions if not function[0][0] == '_']
+    print("Available Effects:")
+    for animation in animation_functions:
+        print(animation[0])
+        if(not animation[1].__doc__ is None and verbose):
+            print("\t" + animation[1].__doc__)
         print()
     print("Use \"effect <effect name> help\" to learn more about an effect and its parameters")
 

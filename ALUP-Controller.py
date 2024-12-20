@@ -8,6 +8,7 @@ import serial.tools.list_ports as list_ports
 
 # led effects
 import effects
+import animator
 from inspect import getmembers, isfunction
 
 sys.path.insert(0,'Python-ALUP')
@@ -173,6 +174,17 @@ class AlupConnection(cmd.Cmd):
         #           "effect Rainbow"
         ApplyEffect(splittedArgs, self.device)
    
+
+    def do_animation(self, args):
+        # initialize animator for the device with 10fps
+        anim = animator.Animator(self.device, 10)
+        print("Playing test animation")
+        try:
+            anim.Play(animator.blink, 0x0000ff, 1)
+        except KeyboardInterrupt:
+            print("Ctl + c pressed. Stopping animation.")
+            return
+
 
     def do_disconnect(self, args):
         """Terminate connection to device without resetting LEDs"""

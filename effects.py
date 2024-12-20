@@ -148,8 +148,8 @@ def Christmas(n):
     Returns:
     return_type: An array containing a rainbow effect for n LEDs
     """
-    pattern = [0xff0000, 0x00ff00]
-    return Repeat(pattern)
+    pattern = [0xf71507,0xff6220,0x75ff33,0x33ff04]
+    return Repeat(n, pattern)
 
 
 def _RainbowColor(i):

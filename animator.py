@@ -3,49 +3,63 @@ Animator.py
 
 Provides Animation effects for the LED strip
 
-Animations are just like effects, except returning the same array of colors every time, animations
+Animations are just like effects, except instead of returning the same array of colors every time, animations
 also get a time parameter t, according to which they may change the color array, creating some kind 
 of animation.
 
-Time t is however long the ALUP controller takes to apply the colors to the LED strip. This may be around 0.03s or faster/slower
-Todo: make user-settable FPS
+Time t is either the length of one frame defined by the FPS parameter or
+however long the ALUP controller takes to apply the colors to the LED strip.
+The FPS may be capped by the hardware capabilities
 
-All animation functions need to have the signature:
-        <description>
-        
-        Parameters:
-        n: size of the returned array
-        t: current time to 
-        <more params>: description 
-        ...
 
-        Returns:
-        return_type: An array containing the colors for the given time t for n LEDs 
+--------------------------------------------------
+            Adding new Animations
+--------------------------------------------------
 
-All color inputs and outputs are in hexadecimal format 0xRRGGBB
-Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed
-        
-For n == 0, an effect should return an empty array: [] 
+Create a new module function with the name of the 
+Animation as function name. 
 
-Always specify default values for function arguments if possible
+Every animation function NEEDS to take in at least two 
+arguments n and t and returns an array of hexadecimal 
+color values.
 
-All effects should have a python docstring specifying all input parameters.
+n describes the desired size of the returned array of colors
+and is most likely the number of LEDs.
+
+t describes the current time step. This is the loop iteration variable
+of the Animator.Play function and  will increase by one for every function call from the Animator.
+
+
+Additional Parameters:
+It is possible to define additional parameters for an animation in case n and t are not
+enough. When playing an animation, Animator.Play() will pass all extra arguments given 
+to the actual Animation function. It is recommended to specify a default value for all 
+extra parameters. For an example, see the blink() animation with its extra 'color' parameter
+
+Return value:
+An animation needs to return an array of Size n which contains the colors values for depending
+on the the given time t
+
+To provide help to end users, add a docstring to animation functions.
+
+--------------------------------------------------
+                    Notes
+--------------------------------------------------
+- All color inputs and outputs are in hexadecimal format 0xRRGGBB
+- Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed      
+- For n == 0, an effect should return an empty array: [] 
+- Specify default values for function arguments if possible
 
 """
-
-
 import time
 
-"""
-Plan: make an animator class which can be run in parallel which knows the fps, tracks time and pauses if needed?
-- possiblility to merge, split, fade, modify animations,...
-
-Make animations as module functions which have n and t as guaranteed parameters
-
-
-"""
 
 class Animator:
+    """
+    Animator class providing functionality to
+    play animations on the given ALUP device
+
+    """
     def __init__(self, device, fps:float=30):
         """
         Default constructor
@@ -62,6 +76,14 @@ class Animator:
         
 
     def Play(self, animation, *args):
+        """
+        Play an animation on the ALUP device
+
+        @param animation: the animation function which should be played
+        @param *args: any extra arguments which the specified animation may
+                      need. Does not include the required arguments n and t
+                      for animation functions.
+        """
         # the time counter; increases by one with every new frame
         t = 0
         while(True):
@@ -96,9 +118,10 @@ def testAnimation(n,t):
 def blink(n,t,color, pause):
     """
     Blink the given color every 10 timesteps
-    @param color: Hexadecimal integer value defining the color which will blink on 
-    all LEDs
-    @param pause: the number of timesteps to pause between switching colors
+    
+    color: Hexadecimal integer value defining the color which will blink on all LEDs
+
+    pause: the number of timesteps to pause between switching colors
     """
     if (int(t/pause) % 2 == 0):
         # return the selected color

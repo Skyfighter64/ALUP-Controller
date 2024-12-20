@@ -98,7 +98,7 @@ class Animator:
 
             end = time.time()
             # sleep for the time which is missing to hit the requested fps
-            time.sleep(1/self.fps  - end + start)
+            time.sleep(max(0, 1/self.fps  - end + start))
             # increase time counter
             t += 1
         

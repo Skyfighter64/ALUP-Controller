@@ -28,6 +28,7 @@ and is most likely the number of LEDs.
 
 t describes the current time step. This is the loop iteration variable
 of the Animator.Play function and  will increase by one for every function call from the Animator.
+When crating animations you may assume a usual frame rate of 30 FPS
 
 
 Additional Parameters:
@@ -47,11 +48,12 @@ To provide help to end users, add a docstring to animation functions.
 --------------------------------------------------
 - All color inputs and outputs are in hexadecimal format 0xRRGGBB
 - Use _HexToRGB(...) and _RGBToHex(...) for conversion if needed      
-- For n == 0, an effect should return an empty array: [] 
+- For n == 0, an animation should return an empty array: [] 
 - Specify default values for function arguments if possible
 
 """
 import time
+import colorsys
 
 
 class Animator:
@@ -115,7 +117,7 @@ def testAnimation(n,t):
         return [0x00ff00] * n
     
 
-def blink(n,t,color, pause):
+def blink(n,t,color=0xffffff, pause=10):
     """
     Blink the given color every 10 timesteps
     
@@ -129,3 +131,41 @@ def blink(n,t,color, pause):
     else:
         # return black color
         return [0x000000] * n
+    
+
+
+def Rainbow(n, t, scale = 1.0):
+    """Generate a rainbow effect
+
+    Parameters:
+    scale: the scaling factor for the rainbow color. scale < 1.0 stretches all colors while scale > 1.0 compresses them
+
+    Returns:
+    return_type: An array containing a rainbow effect for n LEDs
+    """
+    colors = []
+    for i in range(n):
+        colors.append(_RainbowColor(((i + t/10)/n) * scale))
+    return colors
+
+
+def _RainbowColor(i):
+    """generate a single rainbow color
+    
+    @param i: the hue for the generated color, in range [0.0, 1.0]
+    @return: the 24bit hsv color
+    
+    """
+    # make sure i is within 0, 1
+    # this is needed because hsv_to_rgb behaves funky on negative values
+    # sometimes giving back negative rgb values
+    i = i % 1.0
+    # get hsv color as rgb array
+    color_array = colorsys.hsv_to_rgb(i, 1.0, 1.0)
+    # scale array to range [0,255] and combine to hex color
+    color = int(color_array[0] * 255)
+    color = color << 8
+    color += int(color_array[1] * 255)
+    color = color << 8
+    color += int(color_array[2] * 255)
+    return color

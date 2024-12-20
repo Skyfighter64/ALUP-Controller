@@ -6,9 +6,10 @@ import serial
 import serial.tools.list_ports as list_ports
 
 
-# led effects
+# import led effects and animations
 import effects
 import animator
+
 from inspect import getmembers, isfunction
 
 sys.path.insert(0,'Python-ALUP')
@@ -315,8 +316,8 @@ def ApplyAnimation(device, args):
         animation = getattr(animator, args[0])
        
         # initialize animator for the device with 10fps
-        anim = animator.Animator(device, 10)
-        print("Playing test animation")
+        anim = animator.Animator(device, 30)
+        print("Playing animation '%s'" % (animation.__name__))
         try:
             # Play the animation. Note: this function is blocking indefinitely
             anim.Play(animation, *castedArgs)

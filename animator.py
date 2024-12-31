@@ -51,9 +51,16 @@ To provide help to end users, add a docstring to animation functions.
 - For n == 0, an animation should return an empty array: [] 
 - Specify default values for function arguments if possible
 
+
+
+Todo: deltaTime for argument to make it fps / lag independent or scale t in animator with deltatime
+make animations stop when empty array is returned
+
+
 """
 import time
 import colorsys
+import random
 
 
 class Animator:
@@ -169,3 +176,75 @@ def _RainbowColor(i):
     color = color << 8
     color += int(color_array[2] * 255)
     return color
+
+
+
+def Firework(n, t, position = -1, color = 0xff0000):
+    """
+    This animation is WIP
+    """
+    if(position < 0):
+        # choose random position
+        position = round(random() * n)
+    if(color < 0):
+        # choose random color
+        color = _RainbowColor(random())
+
+    """
+    plan: 
+    - spawn white flash at explosion point
+    - make fade from white to color fast after the explosion
+    - propagate colored pixel to both sides with certain expansion speed 
+    - reduce brightness with time
+    - maybe add some noise to the fade down
+    """
+    if (t < 5):
+        return Flash(n, t, position, color)
+    else:
+        return FadeOut(n, t, LogSpread(n, t, position, color))
+
+
+def SqrtSpread(n, t, position, color, startSpeed):
+    """
+    Spread the received color from the given position to both sides, reducing speed quadratically
+    """
+    # calculate speed based on the current point in time
+    speed = startSpeed - (0.1*t)**2
+    # the outermost pixel position of the spread
+    offset = round(speed * t)
+
+    # initialize all pixels to black
+    colors = [0x000000 for i in range(n)]
+    print("offset: %d speed: %d" % (offset, speed))
+    # make all pixels from the given startPosition +- position have the given color
+
+    # indices of boder pixels
+    minIndex = position - offset
+    maxIndex = position + offset
+
+    print("min %d , max %d" % (minIndex, maxIndex))
+
+    colors[minIndex : maxIndex] = [color for _ in range(1 + (2* offset))] # todo: this does not quite work, wrong pixels are set
+    # cut the ends if they are too big
+    colors = colors[0:n]
+
+    # assertion which makes sure the length is right
+    assert len(colors) == n
+
+    return colors
+
+def FadeOut(n, t, speed, colors):
+    """
+    reduce colors linearly until they are black
+    
+    """
+    reduction = max(0, min(255, speed * t))
+    # calculate the hex color which equals the needed subtraction for R, G and B
+    # shift the reductions to their respective position for hex colors
+    reduction_r = reduction 
+    reduction_g = reduction << 8
+    reduction_b = reduction << 16
+
+    for i in range(len(colors)):
+        colors[i] = max(colors[i] - (reduction_r + reduction_g + reduction_b) , 0x000000)
+    return colors

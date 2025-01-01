@@ -2,6 +2,8 @@ import sys
 import ast
 import cmd
 
+import argparse
+
 import serial
 import serial.tools.list_ports as list_ports
 
@@ -70,7 +72,7 @@ Type 'help' for available commands"""
 
             # create new ALUP device
             device = Device()
-            device.SerialConnect(com_port, baud)
+            device.SerialConnect(com_port, baud) #todo: this hangs if baud is wrong
             conn = AlupConnection(device, com_port)
             conn.cmdloop()
 
@@ -83,6 +85,21 @@ Type 'help' for available commands"""
     def do_exit(self, args):
         """exit\t\t\t:\t Exit program"""
         return True
+    
+    def preloop(self):
+        # read in and parse any commandline arguments
+        parser = argparse.ArgumentParser(
+                    prog='Alup-Controller',
+                    description='Interface with ALUP devices to control addressable LEDs')  
+        parser.add_argument('-p', '--port', action='store')      # option that takes a value
+        parser.add_argument('-b', '--baud', action='store', default="115200")  
+        args = parser.parse_args()
+
+        # apply the commandline arguments
+        if(not args.port is None):
+           print("Connecting to port '%s' with baud %s from command line arguments"  % (args.port, args.baud))
+           self.do_connect(args=str(args.port) + " " + str(args.baud))
+        return super().preloop()
 
 
 
@@ -391,5 +408,4 @@ def ScanForDevices():
 
 
 if __name__ == "__main__":
-    #main()
     AlupController().cmdloop()

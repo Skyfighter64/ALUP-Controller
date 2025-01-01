@@ -62,7 +62,6 @@ import time
 import colorsys
 import random
 
-
 class Animator:
     """
     Animator class providing functionality to
@@ -98,8 +97,14 @@ class Animator:
         while(True):
             # get the start time of this frame
             start = time.time()
-
             colors = animation(self.device.configuration.ledCount, t, *args)
+
+            # stop the animation if an empty array is received
+            if(len(colors) == 0):
+                # clear the leds
+                self.device.Clear()
+                break
+
             self.device.SetColors(colors)
             self.device.Send()
 
@@ -233,18 +238,53 @@ def SqrtSpread(n, t, position, color, startSpeed):
 
     return colors
 
-def FadeOut(n, t, speed, colors):
+def FadeOut(n, t, speed, _colors):
     """
     reduce colors linearly until they are black
     
     """
-    reduction = max(0, min(255, speed * t))
-    # calculate the hex color which equals the needed subtraction for R, G and B
-    # shift the reductions to their respective position for hex colors
-    reduction_r = reduction 
-    reduction_g = reduction << 8
-    reduction_b = reduction << 16
+    # we need to make a copy of the list because we would otherwise
+    # cause a loopback 
+    # todo is this really needed or could we just modify the existing array
+    # would definitely be faster (but problematic for float speeds / rounding error)
+    colors = list(_colors)
+    # calculate an even reduction for the current point in time
+    reduction = max(0, round(speed * t))
+
+    if(reduction >= 255):
+        # tell the animator that this animation is finished
+        return []
 
     for i in range(len(colors)):
-        colors[i] = max(colors[i] - (reduction_r + reduction_g + reduction_b) , 0x000000)
+        # get the led's rgb values from the hex color
+        r,g,b = _HexToRGB(colors[i])
+        # apply the reduction
+        r = max(0, r - reduction)
+        g = max(0, g - reduction)
+        b = max(0, b - reduction)
+        # convert the rgb values back to rgb 
+        colors[i] = _RGBToHex(r,g,b)
+
     return colors
+
+
+# todo: quadratic fadeout, looks nice but was a bug
+
+
+# convert R/G/B colors in range 0-255 to a single hex value with format 0xrrggbb
+def _RGBToHex(r, g, b):
+    color = r
+    color = color << 8
+    color += g
+    color = color << 8
+    color += b
+    return color
+
+
+
+# convert a hex color in the format 0xrrggbb to (r,g,b) values in range 0-255
+def _HexToRGB(hex_color):
+    r = (hex_color >> 16) & 0xFF
+    g = (hex_color >> 8) & 0xFF
+    b = hex_color & 0xFF
+    return r,g,b

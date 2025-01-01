@@ -197,7 +197,7 @@ class AlupConnection(cmd.Cmd):
             ListAnimations(verbose=False)
             return
         if(splittedArgs[0] == "list"):
-            AnimationHelp(verbose=True)
+            ListAnimations(verbose=True)
             return
         if(len(splittedArgs) > 1 and splittedArgs[1] == "help"):
             AnimationHelp(splittedArgs[0])

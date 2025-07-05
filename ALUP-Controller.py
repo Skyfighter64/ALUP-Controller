@@ -3,6 +3,7 @@ import ast
 import cmd
 
 import argparse
+import logging
 
 import serial
 import serial.tools.list_ports as list_ports
@@ -59,6 +60,12 @@ class AlupController(cmd.Cmd):
 Type 'help' for available commands"""
     prompt = ">>> "
 
+    def __init__(self, completekey = "tab", stdin = None, stdout = None):
+        super().__init__(completekey, stdin, stdout)
+        logging.basicConfig()
+        self.logger = logging.getLogger(__name__)
+        
+
     def do_connect(self, args):
         """connect\nconnect [com] [baud]\t:\t Connect to serial device"""
         try:
@@ -93,12 +100,15 @@ Type 'help' for available commands"""
                     description='Interface with ALUP devices to control addressable LEDs')  
         parser.add_argument('-p', '--port', action='store')      # option that takes a value
         parser.add_argument('-b', '--baud', action='store', default="115200")  
+        parser.add_argument('--debug', action='store_true')  
         args = parser.parse_args()
 
         # apply the commandline arguments
         if(not args.port is None):
            print("Connecting to port '%s' with baud %s from command line arguments"  % (args.port, args.baud))
            self.do_connect(args=str(args.port) + " " + str(args.baud))
+        if(args.debug):
+            logging.root.setLevel(logging.DEBUG)
         return super().preloop()
 
 

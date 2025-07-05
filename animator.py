@@ -214,18 +214,19 @@ def SqrtSpread(n, t, position, color, startSpeed):
     Spread the received color from the given position to both sides, reducing speed quadratically
     """
     # calculate speed based on the current point in time
-    speed = startSpeed - (0.1*t)**2
+    #speed = max(0, startSpeed - (0.1*t)**2)
+    speed = startSpeed - 0.1*t
     # the outermost pixel position of the spread
     offset = round(speed * t)
 
     # initialize all pixels to black
     colors = [0x000000 for i in range(n)]
-    print("offset: %d speed: %d" % (offset, speed))
+    print("offset: %d speed: %f t: %d" % (offset, speed, t))
     # make all pixels from the given startPosition +- position have the given color
 
     # indices of boder pixels
-    minIndex = position - offset
-    maxIndex = position + offset
+    minIndex = max(0, position - offset)
+    maxIndex = min(n, position + offset)
 
     print("min %d , max %d" % (minIndex, maxIndex))
 

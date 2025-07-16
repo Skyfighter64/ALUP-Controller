@@ -104,11 +104,12 @@ Type 'help' for available commands"""
         args = parser.parse_args()
 
         # apply the commandline arguments
+        if(args.debug):
+            logging.root.setLevel(logging.DEBUG)
         if(not args.port is None):
            print("Connecting to port '%s' with baud %s from command line arguments"  % (args.port, args.baud))
            self.do_connect(args=str(args.port) + " " + str(args.baud))
-        if(args.debug):
-            logging.root.setLevel(logging.DEBUG)
+
         return super().preloop()
 
 

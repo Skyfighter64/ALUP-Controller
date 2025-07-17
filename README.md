@@ -12,13 +12,23 @@ Features:
 This project is WIP and currently still buggy.
 
 ## Install
-Use this to clone the repo and also clone the [Python-ALUP](https://github.com/Skyfighter64/Python-ALUP) submodule:\
-`git clone --recurse-submodules https://github.com/Skyfighter64/ALUP-Controller.git`\
-or
-- `git clone https://github.com/Skyfighter64/ALUP-Controller.git`
-- `cd ALUP-Controller`
-- `git submodule update --init`
 
+### Dependencies:
+Install the [Python-ALUP](https://github.com/Skyfighter64/Python-ALUP) package via pip:
+1. Clone the repository into any folder:
+```sh
+git clone git@github.com:Skyfighter64/Python-ALUP.git
+```
+2. Do development install (for now)
+```sh
+pip install -e ./Python-Alup/
+```
+
+## ALUP Controller
+Clone the git repository into any folder.
+```sh
+git clone git@github.com:Skyfighter64/ALUP-Controller.git
+```
 ## Usage:
 `python3 ALUP-Controller.py`
 

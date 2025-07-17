@@ -8,24 +8,25 @@ import logging
 import serial
 import serial.tools.list_ports as list_ports
 
-
+from pyalup.Device import Device
+from pyalup.Frame import Frame, Command
 # import led effects and animations
 import effects
 import animator
 
 from inspect import getmembers, isfunction
 
-sys.path.insert(0,'Python-ALUP')
-import importlib  
+#sys.path.insert(0,'Python-ALUP')
+#import importlib  
 
 # import the main ALUP library
-Device = getattr(importlib.import_module("Python-ALUP.src.Device"), "Device")
+#Device = getattr(importlib.import_module("Python-ALUP.src.Device"), "Device")
 #from Python-ALUP.src.Device import Device
 # import command definitions
-Command = getattr(importlib.import_module("Python-ALUP.src.Frame"), "Command")
+#Command = getattr(importlib.import_module("Python-ALUP.src.Frame"), "Command")
 #from Python-ALUP.src.Frame import Command
 #from Python-ALUP.src.Frame import Frame
-Frame = getattr(importlib.import_module("Python-ALUP.src.Frame"), "Frame")
+#Frame = getattr(importlib.import_module("Python-ALUP.src.Frame"), "Frame")
 
 
 #

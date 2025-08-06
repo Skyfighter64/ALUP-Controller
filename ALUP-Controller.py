@@ -87,6 +87,31 @@ Type 'help' for available commands"""
         except serial.serialutil.SerialException:
             print("\nError: Could not connect to device: Device not found.\nType \"list\" to list all devices or \"exit\" to return")
 
+    def do_tcpconnect(self, args):
+        """tcpconnect\nconnect [ip] [port]\t:\t Connect to a remote device via TCP"""
+        try:
+            # extract com port and baud
+            splittedArgs = args.split(" ")
+            ip = splittedArgs[0]
+            port = 5012
+
+            if len(splittedArgs) > 1:
+                port = int(splittedArgs[1])
+
+            # create new ALUP device
+            device = Device()
+            device.TcpConnect(ip, port)
+            conn = AlupConnection(device, ip + ":" + str(port))
+            conn.cmdloop()
+
+        except TimeoutError as e:
+            print("Could not connect to remote device: Device did not answer (timeout).")
+        except ConnectionRefusedError as e:
+            print("Connection Refused by remote device.")
+
+
+
+
     def do_list(self, args):
         """list\t\t\t:\t List available serial devices"""
         ScanForDevices()

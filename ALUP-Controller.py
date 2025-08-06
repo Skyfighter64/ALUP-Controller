@@ -110,7 +110,25 @@ Type 'help' for available commands"""
             print("Connection Refused by remote device.")
 
 
+    def do_loglevel(self, args):
+        """Get or set the log level.
+        Usage: loglevel [level]
+        @param level: the log level to set. If not given, the currently active log level is printed out.
+        
+        """
+        # print out the log level
+        newLogLevel = args.split(" ")[0]
+        logger = logging.root
 
+        if(newLogLevel == ''):
+            print("Current loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+        else:
+            # set the new log level
+            try:
+                logger.setLevel(newLogLevel)
+                print("New loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+            except ValueError:
+                print("Unknown Log Level: " + newLogLevel)
 
     def do_list(self, args):
         """list\t\t\t:\t List available serial devices"""
@@ -262,6 +280,27 @@ class AlupConnection(cmd.Cmd):
         #           "effect Rainbow"
         ApplyAnimation(self.device, splittedArgs)
 
+
+    def do_loglevel(self, args):
+        """Get or set the log level.
+        Usage: loglevel [level]
+        @param level: the log level to set. If not given, the currently active log level is printed out.
+        
+        """
+        # print out the log level
+        newLogLevel = args.split(" ")[0]
+        logger = logging.root
+
+        if(newLogLevel == ''):
+            print("Current loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+        else:
+            # set the new log level
+            try:
+                logger.setLevel(newLogLevel)
+                print("New loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+            except ValueError:
+                print("Unknown Log Level: " + newLogLevel)
+        
 
     def do_disconnect(self, args):
         """Terminate connection to device without resetting LEDs"""

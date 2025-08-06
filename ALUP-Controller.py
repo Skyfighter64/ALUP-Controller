@@ -114,7 +114,13 @@ Type 'help' for available commands"""
         """Get or set the log level.
         Usage: loglevel [level]
         @param level: the log level to set. If not given, the currently active log level is printed out.
-        
+        Possible log levels:
+            NOTSET (0)
+            DEBUG (10)
+            INFO (20)
+            WARNING (30)
+            ERROR (40)
+            CRITICAL (50)
         """
         # print out the log level
         newLogLevel = args.split(" ")[0]
@@ -284,8 +290,14 @@ class AlupConnection(cmd.Cmd):
     def do_loglevel(self, args):
         """Get or set the log level.
         Usage: loglevel [level]
-        @param level: the log level to set. If not given, the currently active log level is printed out.
-        
+        @param level: the log level to set (int or string). If not given, the currently active log level is printed out.
+        Possible log levels:
+            NOTSET (0)
+            DEBUG (10)
+            INFO (20)
+            WARNING (30)
+            ERROR (40)
+            CRITICAL (50)
         """
         # print out the log level
         newLogLevel = args.split(" ")[0]

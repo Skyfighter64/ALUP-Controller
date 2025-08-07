@@ -8,8 +8,6 @@ from tqdm import tqdm
 from pyalup.Device import Device
 from pyalup.Frame import Frame
 
-PORT = "COM11"
-BAUD = 115200
 
 MEASUREMENTS = 10000
 
@@ -20,15 +18,15 @@ def main():
     # connect to the controller
     print("Connecting...")
     dut = Device()
-    dut.SerialConnect(PORT, BAUD)
+    #dut.SerialConnect("COM11", 115200)
+    dut.TcpConnect("192.168.180.111", 5012)
     print("Connected")
     print(dut.configuration)
 
     # measure latency for full color frames
     for offset in tqdm(range(MEASUREMENTS)):
         # generate frame
-        #dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
-        dut.SetCommand()
+        dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
         # send frame and wait for response while measuring time
         start = timer()
         dut.Send()

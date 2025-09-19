@@ -41,7 +41,7 @@ Notes:
 # NOTE: 
 
 #MEASUREMENTS = 200000
-MEASUREMENTS = 10000
+MEASUREMENTS =  100000
 
 latencies = []
 
@@ -59,10 +59,13 @@ rx_latencies = []
 
 receiver_out_times = [] # time when receiver sent out packets; this is representative for the receiver's internal time with respect to sender_times
 
+timestamp_errors = []
+# NOTE: the time estimate error does also include the receiving latency
+time_estimate_errors = []   
 
 
 def main():
-    print("ALUP Time Synchronization test")
+    print("ALUP Time Drift test")
     # connect to the controller
     print("Connecting...")
     dut = Device()
@@ -93,6 +96,14 @@ def main():
 
         latencies.append(dut.latency)
 
+        # get difference of reported sender out-time to frames time stamp
+        timestamp_error = dut._t_receiver_out - dut.frame.timestamp - dut.time_delta_ms
+        timestamp_errors.append(timestamp_error)
+
+        # get the error of the estimated time to the true time
+        time_estimate_error = receiver_time - dut._t_receiver_out
+        time_estimate_errors.append(time_estimate_error)
+
     runtime = time.time() - start
     dut.Clear()
     dut.Disconnect()
@@ -120,6 +131,7 @@ def main():
 
     print("\n\nDrift:")
     print(f"Receiver true local time drift: { receiver_true_time_drift:.10f} s/s or {receiver_true_time_drift * (60*60*24)} s/day")
+    print(f"Time drift correction factor: {1/receiver_true_time_slope}")
     print(f"Receiver estimated  time drift: {receiver_estimated_time_drift:.10f} s/s or {receiver_estimated_time_drift * (60*60*24)} s/day")
     print("-----------------------------")
     
@@ -131,7 +143,7 @@ def main():
     
     fig = plt.figure(figsize=(16, 8))
     plt.rcParams['figure.constrained_layout.use'] = True
-    gs = fig.add_gridspec(4, 2, hspace=0, wspace=0)
+    gs = fig.add_gridspec(5, 2, hspace=0, wspace=0)
     axes = gs.subplots().flat
     fig.suptitle('Time Synchronization Measurement Results')
 
@@ -145,15 +157,20 @@ def main():
     axes[4].plot(sender_times, latencies, color=next(colors)["color"], label = "Latency")
     axes[5].plot(sender_times, tx_latencies, color=next(colors)["color"], label = "Sending Latency (Corrected)")
     axes[6].plot(sender_times, rx_latencies, color=next(colors)["color"], label = "Receiving Latency (Corrected)")
-    axes[7].text(0.05, 0.9, f'Total runtime: {time.strftime("%Hh:%Mm:%Ss", time.gmtime(runtime))} ({MEASUREMENTS} Packets)\
+    axes[7].plot(sender_times, timestamp_errors,  color=next(colors)["color"], label =" Time stamp error")
+    axes[8].plot(sender_times, time_estimate_errors,  color=next(colors)["color"], label =" Time estimate error (uncorrected)") 
+    axes[9].text(0.05, 0.9, f'Total runtime: {time.strftime("%Hh:%Mm:%Ss", time.gmtime(runtime))} ({MEASUREMENTS} Packets)\
                  \nReceiver local time drift:        {receiver_true_time_drift:.10f} s/s or {receiver_true_time_drift*(60*60*24):.5f} s/day\
                  \nReceiver corrected time drift: {receiver_estimated_time_drift:.10f} s/s or {receiver_estimated_time_drift*(60*60*24):.5f} s/day',
-                 horizontalalignment='left',verticalalignment='top',transform = axes[7].transAxes)
+                 horizontalalignment='left',verticalalignment='top',transform = axes[9].transAxes)
+
+   
 
     
     axes[1].yaxis.tick_right()
     axes[3].yaxis.tick_right()
     axes[5].yaxis.tick_right()
+    axes[7].yaxis.tick_right()
     
 
 
@@ -177,9 +194,29 @@ def PrintSummary(data):
     """
     print("\tMean: %fms, Variance: %fms\n\t(Min: %fms, Max: %fms, Range: %fms) " % (statistics.mean(data), statistics.variance(data), min(data), max(data), max(data) - min(data) ))
 
-
 def GetSlope(data_x, data_y):
-    return (statistics.median(data_y[-100:]) - statistics.median(data_y[:100])) / (statistics.median(data_x[-100:]) - statistics.median(data_x[:100]))
+    median_size = 25 # NOTE: should be an odd value
+
+    # get the median and index of the first n values
+    start_index, start_median = argmedian(data_y[:median_size])
+
+    # get the median and index of the last n values    
+    end_index, end_median = argmedian(data_y[-median_size:])
+    
+    return (end_median - start_median) / (data_x[-median_size:][end_index] - data_x[:median_size][start_index])
+
+def argmedian(data):
+    """
+    return the median of the given data together with its index in data
+    if data is of even size, the lower value will be returned
+    @param data: a list of sortable elements
+    
+    @returns (index, median)
+    """
+
+    indices = np.argsort(data)
+    return (indices[len(data) // 2], data[indices[len(data) // 2]])
+
 
 def Rainbow(n, offset = 0, scale = 1.0):
     """Generate a rainbow effect

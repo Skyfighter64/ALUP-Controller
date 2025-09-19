@@ -11,7 +11,12 @@ from pyalup.Device import Device
 from pyalup.Frame import Frame
 from pyalup.Group import Group
 
+"""
 
+Test the group latency without the 
+use of timestamps
+
+"""
 MEASUREMENTS = 10000
 
 group_latencies = []  #latency of the group

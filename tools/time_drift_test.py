@@ -41,7 +41,7 @@ Notes:
 # NOTE: 
 
 #MEASUREMENTS = 200000
-MEASUREMENTS =  100000
+MEASUREMENTS =  1000
 
 latencies = []
 
@@ -76,33 +76,37 @@ def main():
 
     # measure latency for full color frames
     start = time.time()
-    for offset in tqdm(range(MEASUREMENTS)):
-        # generate frame
-        dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
-        # send frame and wait for response while measuring time
-        dut.Send()
+    try:
+        for offset in tqdm(range(MEASUREMENTS)):
+            # generate frame
+            dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
+            timestamp = dut.frame.timestamp
+            # send frame and wait for response while measuring time
+            dut.Send()
 
-        time_deltas.append(dut._time_delta_ms_raw)
-        time_deltas_median.append(dut.time_delta_ms)
+            time_deltas.append(dut._time_delta_ms_raw)
+            time_deltas_median.append(dut.time_delta_ms)
 
-        sender_time = (time.time_ns() // 1000000)
-        receiver_time = dut.time_delta_ms + sender_time
-        sender_times.append(sender_time)
-        receiver_times.append(receiver_time)
-        receiver_out_times.append(dut._t_receiver_out)
+            sender_time = (time.time_ns() // 1000000)
+            receiver_time = dut.time_delta_ms + sender_time
+            sender_times.append(sender_time)
+            receiver_times.append(receiver_time)
+            receiver_out_times.append(dut.frame._t_receiver_out)
 
-        tx_latencies.append(dut._t_receiver_in - (dut._t_frame_out + dut.time_delta_ms))
-        rx_latencies.append((dut._t_response_in + dut.time_delta_ms) - dut._t_receiver_out)
+            tx_latencies.append(dut.frame._t_receiver_in - (dut.frame._t_frame_out + dut.time_delta_ms))
+            rx_latencies.append((dut.frame._t_response_in + dut.time_delta_ms) - dut.frame._t_receiver_out)
 
-        latencies.append(dut.latency)
+            latencies.append(dut.latency)
 
-        # get difference of reported sender out-time to frames time stamp
-        timestamp_error = dut._t_receiver_out - dut.frame.timestamp - dut.time_delta_ms
-        timestamp_errors.append(timestamp_error)
+            # get difference of reported sender out-time to frames time stamp
+            timestamp_error = dut.frame._t_receiver_out - timestamp - dut.time_delta_ms
+            timestamp_errors.append(timestamp_error)
 
-        # get the error of the estimated time to the true time
-        time_estimate_error = receiver_time - dut._t_receiver_out
-        time_estimate_errors.append(time_estimate_error)
+            # get the error of the estimated time to the true time
+            time_estimate_error = receiver_time - dut.frame._t_receiver_out
+            time_estimate_errors.append(time_estimate_error)
+    except KeyboardInterrupt:
+        print("Ctl + C Pressed, Stopping")
 
     runtime = time.time() - start
     dut.Clear()

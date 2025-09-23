@@ -3,6 +3,7 @@ import time
 import math
 import multiprocessing
 import logging
+import colorsys
 from tqdm import tqdm
 import statistics
 import numpy as np
@@ -18,8 +19,8 @@ Test the accuracy of the time stamps for a group of devices
 
 """
 
-MEASUREMENTS = 40000
-NUM_DEVICES = 3
+MEASUREMENTS = 10000
+NUM_DEVICES = 4
 
 TIME_DELTA_BUFFER_SIZE=100
 
@@ -68,6 +69,7 @@ def main():
     #dut2.TcpConnect("192.168.180.111", 5012)
     print("Connected")
     print(dut2.configuration)
+    
 
     print("Connecting...")
     dut3 = Device(_time_delta_buffer_size=TIME_DELTA_BUFFER_SIZE)
@@ -76,10 +78,17 @@ def main():
     print("Connected")
     print(dut3.configuration)
 
+    print("Connecting...")
+    dut4 = Device(_time_delta_buffer_size=TIME_DELTA_BUFFER_SIZE)
+    #dut3.SerialConnect("COM4", 115200)
+    dut4.TcpConnect("192.168.180.111", 5012)
+    print("Connected")
+    print(dut4.configuration)
 
     group.Add(dut)
     group.Add(dut2)
     group.Add(dut3)
+    group.Add(dut4)
     
 
     # send some frames to get a first calibration for the time offset
@@ -98,19 +107,21 @@ def main():
     try:
         for i in tqdm(range(MEASUREMENTS)):
             # turn on the led at exactly the next second
-            group.SetColors([0xff0000])
+            #group.SetColors([0xff0000])
+            group.SetColors(Rainbow(dut.configuration.ledCount, i))
 
             #print("now: " + str(time.time()) + " timestamp: " + str(time_stamp))
             #print("Time until event: " + str(time_stamp - (time.time_ns() // 1000000)) + "ms")
 
-            group.Send(delayTarget=None) 
+            group.Send(delayTarget=35) 
 
             # log measurements
             log_device_stats(group.devices)
 
             # turn off the led at exactly the next second
-            group.SetColors([0x000000])
-            group.Send(delayTarget=None) 
+            # NOTE: don't use clear command here to simulate a lot of data / even data flow
+            group.SetColors([0x000000] * dut.configuration.ledCount)
+            group.Send(delayTarget=35) 
 
             # log measurements
             log_device_stats(group.devices)
@@ -122,6 +133,8 @@ def main():
     print("\n-------------[Done]-------------")
     print("Total runtime: " + str(time.strftime('%Hh:%Mm:%Ss', time.gmtime(runtime))))
     print("Measurements: " + str(len(sender_times)))
+    print("Device Processing Time:")
+    print_summary("Device Processing Time", receiver_packet_processing_times)
     print_drift()
     print("-----------------------------")
     
@@ -148,7 +161,18 @@ def print_drift():
         print(f"Time drift correction factor: {1/receiver_true_time_slope}")
         print(f"Estimated time drift: {receiver_estimated_time_drift:.10f} s/s or {receiver_estimated_time_drift * (60*60*24)} s/day")
 
+def print_summary(variable_name, data):
+    print(variable_name + " Summary:")
+    for i in range(NUM_DEVICES):
+        print(f"Device {str(i)}:")
+        print_mean(data[i])
 
+
+def print_mean(data):
+    """
+    Print a summary of a given list of numbers
+    """
+    print("\tMean: %fms, Variance: %fms\n\t(Min: %fms, Max: %fms, Range: %fms) " % (statistics.mean(data), statistics.variance(data), min(data), max(data), max(data) - min(data) ))
 
 
 def log_device_stats(devices):
@@ -163,25 +187,25 @@ def log_device_stats(devices):
 
         receiver_time_estimate = device.time_delta_ms + sender_time
         receiver_time_estimates[i].append(receiver_time_estimate)
-        receiver_out_times[i].append(device._t_receiver_out)
+        receiver_out_times[i].append(device.frame._t_receiver_out)
 
         # calculate rx and tx latencies (with correction)
-        tx_latency = device._t_receiver_in - (device._t_frame_out + device.time_delta_ms)
-        rx_latency = (device._t_response_in + device.time_delta_ms) - device._t_receiver_out
+        tx_latency = device.frame._t_receiver_in - (device.frame._t_frame_out + device.time_delta_ms)
+        rx_latency = (device.frame._t_response_in + device.time_delta_ms) - device.frame._t_receiver_out
         tx_latencies[i].append(tx_latency)
         rx_latencies[i].append(rx_latency)
 
         # get difference of reported sender out-time to frames time stamp
-        timestamp_error = device._t_receiver_out - device.frame.timestamp - device.time_delta_ms
+        timestamp_error = device.frame._t_receiver_out - device.frame.timestamp - device.time_delta_ms
         timestamp_errors[i].append(timestamp_error)
 
         # get the error of the estimated time to the true time
-        time_estimate_error = receiver_time_estimate - device._t_receiver_out
+        time_estimate_error = receiver_time_estimate - device.frame._t_receiver_out
         time_estimate_errors[i].append(time_estimate_error)
         time_estimate_error_corrected = time_estimate_error - rx_latency
         time_estimate_errors_corrected[i].append(time_estimate_error_corrected)
 
-        receiver_packet_processing_times[i].append(device._t_receiver_out - device._t_receiver_in)
+        receiver_packet_processing_times[i].append(device.frame._t_receiver_out - device.frame._t_receiver_in)
 
         # save true RTT latency
         latencies[i].append(device.latency)
@@ -297,6 +321,44 @@ def plot_stats():
     fig.tight_layout()
     # Show plot
     plt.show()
+
+def Rainbow(n, offset = 0, scale = 1.0):
+    """Generate a rainbow effect
+
+    Parameters:
+    n: size of the returned RGB array
+    offset: the offset of the HSV rainbow colors in positive index direction (Hue offset for each index).
+    scale: the scaling factor for the rainbow color. scale < 1.0 stretches all colors while scale > 1.0 compresses them
+
+    Returns:
+    return_type: An array containing a rainbow effect for n LEDs
+    """
+    colors = []
+    for i in range(n):
+        colors.append(_RainbowColor(((i + offset)/n) * scale))
+    return colors
+
+
+def _RainbowColor(i):
+    """generate a single rainbow color
+    
+    @param i: the hue for the generated color, in range [0.0, 1.0]
+    @return: the 24bit hsv color
+    
+    """
+    # make sure i is within 0, 1
+    # this is needed because hsv_to_rgb behaves funky on negative values
+    # sometimes giving back negative rgb values
+    i = i % 1.0
+    # get hsv color as rgb array
+    color_array = colorsys.hsv_to_rgb(i, 1.0, 1.0)
+    # scale array to range [0,255] and combine to hex color
+    color = int(color_array[0] * 255)
+    color = color << 8
+    color += int(color_array[1] * 255)
+    color = color << 8
+    color += int(color_array[2] * 255)
+    return color
     
 
 if __name__ == "__main__":

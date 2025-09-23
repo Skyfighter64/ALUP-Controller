@@ -41,8 +41,8 @@ def main():
     # connect to the controller
     print("Connecting...")
     dut = Device()
-    dut.SerialConnect("COM6", 115200)
-    #dut.TcpConnect("192.168.180.112", 5012)
+    #dut.SerialConnect("COM6", 115200)
+    dut.TcpConnect("192.168.180.112", 5012)
     print("Connected")
     print(dut.configuration)
 
@@ -82,17 +82,17 @@ def main():
 
         # send frame and wait for response
         dut.Send()
-        sender_time = dut._t_response_in
+        sender_time = dut.frame._t_response_in
         # get difference of reported sender out-time to time stamp
-        timestamp_error = dut._t_receiver_out - timestamp - dut.time_delta_ms
+        timestamp_error = dut.frame._t_receiver_out - timestamp - dut.time_delta_ms
         timestamp_errors.append(timestamp_error)
 
         time_deltas.append(dut.time_delta_ms)
         time_deltas_raw.append(dut._time_delta_ms_raw)
         sender_times.append(sender_time)
         # calculate rx/tx latency and adjust for time domain differences
-        tx_latencies.append(dut._t_receiver_in - (dut._t_frame_out + dut.time_delta_ms))
-        rx_latencies.append((dut._t_response_in + dut.time_delta_ms) - dut._t_receiver_out)
+        tx_latencies.append(dut.frame._t_receiver_in - (dut.frame._t_frame_out + dut.time_delta_ms))
+        rx_latencies.append((dut.frame._t_response_in + dut.time_delta_ms) - dut.frame._t_receiver_out)
         latencies.append(dut.latency)
         time_deltas_median.append(statistics.median(time_deltas_raw[-100:]))
         

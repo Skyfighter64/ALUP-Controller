@@ -21,7 +21,7 @@ Test script for measuring time synchronization and various time related statisti
 
 # NOTE: all times are in ms
 
-MEASUREMENTS = 10
+MEASUREMENTS = 1000
 
 
 latencies = []
@@ -55,41 +55,44 @@ def main():
     # connect to the controller
     print("Connecting...")
     dut = Device()
-    #dut.SerialConnect("COM6", 115200)
-    dut.TcpConnect("192.168.180.112", 5012)
+    dut.SerialConnect("COM6", 115200)
+    #dut.TcpConnect("192.168.180.112", 5012)
     print("Connected")
     print(dut.configuration)
 
-    # measure latency for full color frames
-    for offset in tqdm(range(MEASUREMENTS)):
-        # generate frame
-        #dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
-        dut.SetColors([])
-        # send frame and wait for response while measuring time
-        dut.Send()
+    try: 
+        # measure latency for full color frames
+        for offset in tqdm(range(MEASUREMENTS)):
+            # generate frame
+            #dut.SetColors(Rainbow(dut.configuration.ledCount, offset))
+            dut.SetColors([])
+            # send frame and wait for response while measuring time
+            dut.Send()
 
-        time_deltas.append(dut.time_delta_ms)
+            time_deltas.append(dut.time_delta_ms)
 
-        time_delta_median = statistics.median(time_deltas[-median_size:])
+            time_delta_median = statistics.median(time_deltas[-median_size:])
 
-        time_deltas_median.append(time_delta_median)
+            time_deltas_median.append(time_delta_median)
 
-        receiver_packet_processing_times.append(dut._t_receiver_out - dut._t_receiver_in)
+            receiver_packet_processing_times.append(dut.frame._t_receiver_out - dut.frame._t_receiver_in)
 
-        sender_time = (time.time_ns() // 1000000)
-        receiver_time = time_delta_median + sender_time
+            sender_time = (time.time_ns() // 1000000)
+            receiver_time = time_delta_median + sender_time
 
-        sender_times.append(sender_time)
-        receiver_times.append(receiver_time)
+            sender_times.append(sender_time)
+            receiver_times.append(receiver_time)
 
-        tx_latencies.append(dut._t_receiver_in - (dut._t_frame_out + time_delta_median))
-        rx_latencies.append((dut._t_response_in + time_delta_median) - dut._t_receiver_out)
-        tx_latencies_raw.append(dut._t_receiver_in - dut._t_frame_out)
-        rx_latencies_raw.append(dut._t_response_in - dut._t_receiver_out)
+            tx_latencies.append(dut.frame._t_receiver_in - (dut.frame._t_frame_out + time_delta_median))
+            rx_latencies.append((dut.frame._t_response_in + time_delta_median) - dut.frame._t_receiver_out)
+            tx_latencies_raw.append(dut.frame._t_receiver_in - dut.frame._t_frame_out)
+            rx_latencies_raw.append(dut.frame._t_response_in - dut.frame._t_receiver_out)
 
-        receiver_in_times.append(dut._t_receiver_in)
+            receiver_in_times.append(dut.frame._t_receiver_in)
 
-        latencies.append(dut.latency)
+            latencies.append(dut.latency)
+    except KeyboardInterrupt:
+        print("Ctl + C pressed, Stopping.")
 
     dut.Clear()
     dut.Disconnect()

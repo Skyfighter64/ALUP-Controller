@@ -46,3 +46,4 @@ local/
 .vscode/
 log.txt
 .pyc
+logs/

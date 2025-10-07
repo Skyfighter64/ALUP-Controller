@@ -9,6 +9,7 @@ from tqdm import tqdm
 import statistics
 import numpy as np
 
+import pyalup
 from pyalup.Device import Device
 from pyalup.Group import Group
 
@@ -34,6 +35,12 @@ TIME_DELTA_BUFFER_SIZE=100
 process = None
 
 group = Group()
+
+# set up the root logger
+#logging.basicConfig(format="[%(asctime)s %(levelname)s (%(funcName)s, l.%(lineno)d)]: %(message)s", datefmt="%H:%M:%S")
+logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S")
+# set log level of the ALUP logger to debug
+logging.getLogger(pyalup.__name__).setLevel(logging.DEBUG)
 
 """
 NOTE: Some data represents true measurement results while other data is marked as estimate or corrected.
@@ -69,8 +76,6 @@ runtime = 0
 
 def main():
     global runtime
-    #logging.basicConfig(level=logging.INFO, format='%(message)s')
-    #logging.basicConfig(level=logging.DEBUG)
 
     print("ALUP timestamp accuracy test")
     # connect to the controller
@@ -142,10 +147,10 @@ def main():
             #print("Time until event: " + str(time_stamp - (time.time_ns() // 1000000)) + "ms")
 
             # schedule a frame every n ms
-            #for i in range(NUM_DEVICES):
-            #    group.devices[i].frame.timestamp = next_timestamp
+            for i in range(NUM_DEVICES):
+                group.devices[i].frame.timestamp = next_timestamp
 
-            #next_timestamp += 50
+            next_timestamp += 50
             
             group.Send()
             #group.Send(delayTarget=30)

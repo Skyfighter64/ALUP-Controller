@@ -37,7 +37,8 @@ process = None
 group = Group()
 
 # log to a file in the logs folder
-logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s %(funcName)s l.%(lineno)d]: %(message)s", datefmt="%H:%M:%S", level=logging.DEBUG)
+logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s %(funcName)s l.%(lineno)d]: %(message)s", datefmt="%H:%M:%S")
+logging.getLogger(pyalup.__name__).setLevel(logging.DEBUG)
 # log to the terminal directly
 #logging.basicConfig(format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S", level=logging.DEBUG)
 
@@ -117,9 +118,9 @@ def main():
     # send some frames to get a first calibration for the time offset
     
     print("Calibrating time delta")
-    for i in tqdm(range(10)):
-        group.SetColors([0x000000])
-        #group.SetColors([]) #TODO: with TCP this  takes very long (why?)
+    for i in tqdm(range(100)):
+        #group.SetColors([0x000000])
+        group.SetColors([]) #TODO: with TCP this  takes very long (why?)
         group.Send()
         #log_device_stats(group.devices)
     print("Flushing Buffers")

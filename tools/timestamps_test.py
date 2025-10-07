@@ -41,8 +41,8 @@ def main():
     # connect to the controller
     print("Connecting...")
     dut = Device()
-    #dut.SerialConnect("COM6", 115200)
-    dut.TcpConnect("192.168.180.112", 5012)
+    dut.SerialConnect("COM6", 115200)
+    #dut.TcpConnect("192.168.180.112", 5012)
     print("Connected")
     print(dut.configuration)
 

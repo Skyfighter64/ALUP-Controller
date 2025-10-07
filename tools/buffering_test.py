@@ -36,11 +36,10 @@ process = None
 
 group = Group()
 
-# set up the root logger
-#logging.basicConfig(format="[%(asctime)s %(levelname)s (%(funcName)s, l.%(lineno)d)]: %(message)s", datefmt="%H:%M:%S")
-logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S")
-# set log level of the ALUP logger to debug
-logging.getLogger(pyalup.__name__).setLevel(logging.DEBUG)
+# log to a file in the logs folder
+logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s %(funcName)s l.%(lineno)d]: %(message)s", datefmt="%H:%M:%S", level=logging.DEBUG)
+# log to the terminal directly
+#logging.basicConfig(format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S", level=logging.DEBUG)
 
 """
 NOTE: Some data represents true measurement results while other data is marked as estimate or corrected.

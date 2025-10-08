@@ -23,25 +23,18 @@ for one or multiple grouped devices
 
 """
 
-# TODO: rethink logging concept:
-# How should the data be logged (synchronized logging for all devices?)
-# what should be logged with the callback, what is logged per-send()
-
 MEASUREMENTS = 30000
 NUM_DEVICES = 1
 
 TIME_DELTA_BUFFER_SIZE=100
 
-process = None
-
 group = Group()
 
 # log to a file in the logs folder
-logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s %(funcName)s l.%(lineno)d]: %(message)s", datefmt="%H:%M:%S")
-logging.getLogger(pyalup.__name__).setLevel(logging.DEBUG)
+#logging.basicConfig(filename="../logs/latest.log", filemode="w+", format="[%(asctime)s %(levelname)s %(funcName)s l.%(lineno)d]: %(message)s", datefmt="%H:%M:%S")
 # log to the terminal directly
-#logging.basicConfig(format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S", level=logging.DEBUG)
-
+logging.basicConfig(format="[%(asctime)s %(levelname)s]: %(message)s", datefmt="%H:%M:%S")
+#logging.getLogger(pyalup.__name__).setLevel(logging.INFO)
 """
 NOTE: Some data represents true measurement results while other data is marked as estimate or corrected.
 Estimated/Corrected data was corrected in its time domain by adding time_delta, therefore it is bound to 
@@ -119,13 +112,11 @@ def main():
     
     print("Calibrating time delta")
     for i in tqdm(range(100)):
-        #group.SetColors([0x000000])
         group.SetColors([]) #TODO: with TCP this  takes very long (why?)
         group.Send()
-        #log_device_stats(group.devices)
     print("Flushing Buffers")
     for device in tqdm(group.devices):
-        device.FlushBuffer() # TODO: flush buffer is somehow bugged and confuses ids
+        device.FlushBuffer()
     print("Done")
 
     # assign logging callbacks for each device
@@ -135,42 +126,31 @@ def main():
     
     start = time.time()
 
-    next_timestamp = time.time_ns() // 1000000
+    #next_timestamp = time.time_ns() // 1000000
 
     try:
         for i in tqdm(range(MEASUREMENTS)):
-            # turn on the led at exactly the next second
-            group.SetColors([0xff0000] * 100)
-            #group.SetColors(Rainbow(dut.configuration.ledCount, i))
-
-            #print("now: " + str(time.time()) + " timestamp: " + str(time_stamp))
-            #print("Time until event: " + str(time_stamp - (time.time_ns() // 1000000)) + "ms")
-
-            # schedule a frame every n ms
-            for i in range(NUM_DEVICES):
-                group.devices[i].frame.timestamp = next_timestamp
-
-            next_timestamp += 50
             
-            group.Send()
-            #group.Send(delayTarget=30)
-
-
-            # log measurements
-            #log_device_stats(group.devices)
 
             # schedule a frame every n ms
             #for i in range(NUM_DEVICES):
             #    group.devices[i].frame.timestamp = next_timestamp
-            #next_timestamp += 30
+            #next_timestamp += 50
+
+            # turn on the led at exactly the next second
+            group.SetColors([0xff0000] * 100)
+            group.Send()
+
+            # schedule a frame every n ms
+            #for i in range(NUM_DEVICES):
+            #    group.devices[i].frame.timestamp = next_timestamp
+            #next_timestamp += 50
 
             # turn off the led at exactly the next second
             # NOTE: don't use clear command here to simulate a lot of data / even data flow
             #group.SetColors([0x000000] * dut.configuration.ledCount)
             #group.Send() 
 
-            # log measurements
-            #log_device_stats(group.devices)
     except KeyboardInterrupt:
         pass
     
@@ -183,9 +163,7 @@ def main():
     print_summary("Device Processing Time", receiver_packet_processing_times)
     print_drift()
     print("-----------------------------")
-    
     plot_stats()
-
 
 
 
@@ -194,6 +172,7 @@ def print_time():
     print("Current time:")
     while True:
         print(datetime.datetime.now().strftime('%H:%M:%S:%f (H:M:S:us)'), end="\r", flush=True)
+
 
 def print_drift():
     for i in range(NUM_DEVICES):
@@ -209,6 +188,7 @@ def print_drift():
             print(f"Estimated time drift: {receiver_estimated_time_drift:.10f} s/s or {receiver_estimated_time_drift * (60*60*24)} s/day")
         except ZeroDivisionError:
             print("Could not calculate drift. Not enough data points")
+
 
 def print_summary(variable_name, data):
     print(variable_name + " Summary:")
@@ -240,9 +220,6 @@ def log_device_stats(i, frame):
     receiver_out_times[i].append(frame._t_receiver_out)
 
 
-    # TODO: we cannot take the data from device.frame anymore with buffering!
-    #       The shown Data is WRONG
-
     # calculate rx and tx latencies (with correction)
     tx_latency = frame._t_receiver_in - (frame._t_frame_out + device.time_delta_ms)
     rx_latency = (frame._t_response_in + device.time_delta_ms) - frame._t_receiver_out
@@ -261,8 +238,6 @@ def log_device_stats(i, frame):
     time_estimate_errors_corrected[i].append(time_estimate_error_corrected)
 
     receiver_packet_processing_times[i].append(frame._t_receiver_out - frame._t_receiver_in)
-
-    # TODO: this should maybe be logged separately, after every Send() call and not with the callback
     openResponses[i].append(len(device._unansweredFrames))
 
     # save true RTT latency
@@ -337,7 +312,6 @@ def plot_stats():
     # reset color cycle
     colors = plt.rcParams["axes.prop_cycle"]()
 
-
     # plot local times
     for i in range(len(frame_rtts)):
         color = next(colors)["color"]
@@ -358,7 +332,6 @@ def plot_stats():
         axes[4].plot(sender_times[i], time_estimate_errors_corrected[i], color=color, alpha=0.8, label = "Dev. " + str(i) + " time est. error (corr.)")
 
     #axes[5].plot(sender_times[0], group_latencies, color=color, label = "Group Latency")
-
 
     for i in range(len(receiver_packet_processing_times)):
         color = next(colors)["color"]
@@ -386,11 +359,10 @@ def plot_stats():
 
     for ax in fig.get_axes()[4:]:
         ax.set_ylim(bottom=-20) 
-
-    
     fig.tight_layout()
     # Show plot
     plt.show()
+
 
 def Rainbow(n, offset = 0, scale = 1.0):
     """Generate a rainbow effect
@@ -432,9 +404,4 @@ def _RainbowColor(i):
     
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        if not process is None: 
-            process.terminate()
-        raise e
+    main()

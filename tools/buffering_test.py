@@ -112,7 +112,7 @@ def main():
     
     print("Calibrating time delta")
     for i in tqdm(range(100)):
-        group.SetColors([]) #TODO: with TCP this  takes very long (why?)
+        group.SetColors([])
         group.Send()
     print("Flushing Buffers")
     for device in tqdm(group.devices):

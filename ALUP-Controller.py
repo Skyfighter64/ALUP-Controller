@@ -224,8 +224,7 @@ class AlupConnection(cmd.Cmd):
 
     def do_clear(self, args):
         """Set all LEDs to black"""
-        self.device.SetCommand(Command.CLEAR)
-        self.device.Send()
+        self.device.Clear()
         print("Cleared all LEDs")
 
 
@@ -329,8 +328,7 @@ class AlupConnection(cmd.Cmd):
 
     def do_exit(self, args):
         """Set LEDs to black and terminate connection to device"""
-        self.device.SetCommand(Command.CLEAR)
-        self.device.Send()
+        self.device.Clear()
         self.device.Disconnect()
         print("Cleared and Disconnected")
         return True

@@ -35,21 +35,6 @@ from inspect import getmembers, isfunction
 #
 #
 
-"""
-Plan:
-- scan ports, list all ALUP devices
-- ability to manually trigger scan
-- connect to devices
-- print out configuration
-- set all leds to color
-- activate effect
-- send commands
-- disconnect (alt.: via ctl c)
-
-- use timeouts
-
-"""
-
 
 class AlupController(cmd.Cmd):
     intro = """

@@ -1,15 +1,19 @@
 # ALUP-Controller
-An interactive commandline ALUP Sender.
+An interactive commandline tool to interact with the ALUP protocol.
 
 This is a tool to use, debug, and work with ALUP devices.
-(Currently only over serial connection)
 
 Features:
-- Set RGB colors of leds
-- Read ALUP Configuration
+- Test ALUP Devices
+- Set RGB colors of one or multiple LEDs manually
+- Read the configuration of ALUP devices
+- Display custom effects
+- Play animations
+- Measure device metrics
+- And more...
 
 # Note:
-This project is WIP and currently still buggy.
+This project is WIP.
 
 ## Install
 

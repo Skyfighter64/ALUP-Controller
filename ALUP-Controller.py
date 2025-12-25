@@ -101,6 +101,7 @@ Type 'help' for available commands"""
         @param level: the log level to set. If not given, the currently active log level is printed out.
         Possible log levels:
             NOTSET (0)
+            PHYSICAL (5)
             DEBUG (10)
             INFO (20)
             WARNING (30)
@@ -277,6 +278,7 @@ class AlupConnection(cmd.Cmd):
         @param level: the log level to set (int or string). If not given, the currently active log level is printed out.
         Possible log levels:
             NOTSET (0)
+            PHYSICAL (5)
             DEBUG (10)
             INFO (20)
             WARNING (30)
@@ -299,7 +301,7 @@ class AlupConnection(cmd.Cmd):
         
 
     def do_disconnect(self, args):
-        """Terminate connection to device without resetting LEDs"""
+        """Send a Disconnect command, terminating the connection to the device without resetting LEDs"""
         self.device.Disconnect()
         print("Disconnected")
         return True

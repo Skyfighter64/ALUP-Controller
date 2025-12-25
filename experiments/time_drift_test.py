@@ -41,7 +41,7 @@ Notes:
 # NOTE: 
 
 #MEASUREMENTS = 200000
-MEASUREMENTS =  1000
+MEASUREMENTS =  10000
 
 latencies = []
 
@@ -69,8 +69,8 @@ def main():
     # connect to the controller
     print("Connecting...")
     dut = Device()
-    #dut.SerialConnect("COM6", 115200)
-    dut.TcpConnect("192.168.180.112", 5012)
+    dut.SerialConnect("COM10", 115200)
+    #dut.TcpConnect("192.168.180.112", 5012)
     print("Connected")
     print(dut.configuration)
 

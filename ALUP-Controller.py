@@ -16,6 +16,8 @@ import animator
 
 from inspect import getmembers, isfunction
 
+from tools import metrics
+
 #sys.path.insert(0,'Python-ALUP')
 #import importlib  
 
@@ -241,6 +243,7 @@ class AlupConnection(cmd.Cmd):
         # example: "effect StaticColors 0xffffff"
         #           "effect Rainbow"
         ApplyEffect(splittedArgs, self.device)
+
    
 
     def do_animation(self, args):
@@ -298,6 +301,14 @@ class AlupConnection(cmd.Cmd):
                 print("New loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
             except ValueError:
                 print("Unknown Log Level: " + newLogLevel)
+
+    def do_measure_drift(self, args):
+        """
+        Measure the drift of the device and calculate a linear correction factor
+        Note: The measurement gets more accurate the longer it runs
+        """
+        result = metrics.Measure(self.device)
+        metrics.PrintDrift(result)
         
 
     def do_disconnect(self, args):

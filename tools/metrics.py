@@ -92,7 +92,7 @@ def Measure(device:Device,  measurements=10_000):
     device.Calibrate()
     logger.info("Done")
 
-    logger.info(f"Starting to take {measurements} Measurements for device {device.configuration.deviceName}.\nTo interrupt, press Ctrl + c.")
+    print(f"Starting to take {measurements} Measurements for device '{device.configuration.deviceName}'.\nTo interrupt, press Ctrl + c.")
 
     # log the start time
     start = time.time()
@@ -110,10 +110,10 @@ def Measure(device:Device,  measurements=10_000):
 
     # remove the callback from the device
     device._onFrameResponse = None
-    logger.info("\n-------------[Done]-------------")
-    logger.info("Total runtime: " + str(time.strftime('%Hh:%Mm:%Ss', time.gmtime(metrics.runtime))))
-    logger.info("Measurements: " + str(len(metrics.sender_times)))
-    logger.info("-----------------------------")
+    print("\n-------------[Done]-------------")
+    print("Total runtime: " + str(time.strftime('%Hh:%Mm:%Ss', time.gmtime(metrics.runtime))))
+    print("Measurements: " + str(len(metrics.sender_times)))
+    print("-----------------------------")
     return metrics
 
 

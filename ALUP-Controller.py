@@ -302,11 +302,15 @@ class AlupConnection(cmd.Cmd):
             except ValueError:
                 print("Unknown Log Level: " + newLogLevel)
 
+
+
+
     def do_measure_drift(self, args):
         """
         Measure the drift of the device and calculate a linear correction factor
         Note: The measurement gets more accurate the longer it runs
         """
+        #TODO: make number of measurements, delay between measurements configurable
         result = metrics.Measure(self.device)
         metrics.PrintDrift(result)
         

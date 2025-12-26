@@ -159,6 +159,8 @@ class AlupConnection(cmd.Cmd):
     def __init__(self, device : Device,  com_port : str):   
         self.device = device
         self.prompt = "(%s)> " % (com_port)
+        # cache the latest set of metrics for further use
+        self._metrics_cache = None
         super(AlupConnection, self).__init__()
     
     def __del__(self):
@@ -304,6 +306,37 @@ class AlupConnection(cmd.Cmd):
 
 
 
+    def do_metrics(self, args):
+        """
+        measure, plot or analyze protocol relevant metrics
+        """
+        parser = argparse.ArgumentParser(
+                    prog='metrics',
+                    description='measure, plot or analyze protocol relevant metrics',
+                    exit_on_error=False)  
+        parser.add_argument('command', choices=["measure", "plot", "print", "clear"])
+        parser.add_argument('-n', help="number of measurements to take", type=int, default=10_000)
+        try:
+            args = parser.parse_args(args.split(" "))
+        except Exception as e:
+            # Do not exit on error
+            print(e)
+            return False
+
+        if(args.command == "measure"):
+            self._metrics_cache = metrics.Measure(self.device, args.n)
+            pass
+        elif (args.command == "plot"):
+            metrics.Plot(self.device, self._metrics_cache)
+            pass
+        elif (args.command == "print"):
+            print("Printing out results from last measurement")
+            print("WIP, for now only drift is printed")
+            metrics.PrintDrift(self._metrics_cache)
+            pass
+        elif (args.command == "clear"):
+            self._metrics_cache = None
+            print("Cleared cached metrics")
 
     def do_measure_drift(self, args):
         """

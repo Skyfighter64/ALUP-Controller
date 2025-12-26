@@ -5,6 +5,7 @@ from pyalup.Device import Device
 import logging
 import functools
 import numpy as np
+from matplotlib import pyplot as plt
 
 """
 
@@ -118,6 +119,9 @@ def Measure(device:Device,  measurements=10_000):
 
 
 
+
+
+
 # @param frame: the frame from which the data is logged
 def log_device_stats(device, metrics, frame):
     """
@@ -200,6 +204,91 @@ def GetSlope(data_x, data_y):
     
     return (end_median - start_median) / (data_x[-median_size:][end_index] - data_x[:median_size][start_index])
 
+
+def Plot(device, metrics):
+    if (metrics is None):
+        return
+     # Create plot
+    fig = plt.figure(figsize=(16, 8))
+    plt.rcParams['figure.constrained_layout.use'] = True
+    gs = fig.add_gridspec(4 , 2, hspace=0, wspace=0)
+    axes = gs.subplots().flat
+    fig.suptitle('Metrics')
+
+    colors = plt.rcParams["axes.prop_cycle"]()
+
+    """
+    text = f'Total runtime: {time.strftime("%Hh:%Mm:%Ss", time.gmtime(runtime))} ({str(len(sender_times[i]))} Measurements) + Time Delta Buffer: {TIME_DELTA_BUFFER_SIZE}'
+    for i in range(NUM_DEVICES):
+        receiver_true_time_drift = GetDrift(sender_times[i], receiver_out_times[i])
+        receiver_estimated_time_drift = GetDrift(sender_times[i], receiver_time_estimates[i])
+        text += f'\nDev. {str(i)} local time drift:        {receiver_true_time_drift:.10f} s/s or {receiver_true_time_drift*(60*60*24):.5f} s/day\
+                 \nDev. {str(i)} corrected time drift: {receiver_estimated_time_drift:.10f} s/s or {receiver_estimated_time_drift*(60*60*24):.5f} s/day'
+    
+    axes[0].text(0.05, 0.9, text,
+                 horizontalalignment='left',verticalalignment='top',transform = axes[0].transAxes)
+    """
+
+    color = next(colors)["color"]
+    axes[0].plot(metrics.sender_times, metrics.openResponses,color=color, label= "Open Responses (Max. " + str(device.configuration.frameBufferSize) + ")")
+    
+    # reset color cycle
+    #colors = plt.rcParams["axes.prop_cycle"]()
+
+    # plot everything relative to sender time 
+    # plot time_delta
+    color = next(colors)["color"]
+    axes[1].plot(metrics.sender_times, metrics.time_deltas,color=color, label= "Time Delta (median)")
+    axes[1].plot(metrics.sender_times, metrics.time_deltas_raw, color=color, alpha=0.5, label =  "Time Delta (Raw)")
+
+    # reset color cycle
+    #colors = plt.rcParams["axes.prop_cycle"]()
+
+    # plot local times
+    color = next(colors)["color"]
+    axes[2].plot(metrics.sender_times, metrics.sender_times , color=color, label = "Local Sender Time")
+    axes[2].plot(metrics.sender_times, metrics.receiver_out_times, color=color, label = "Local Receiver Time")
+
+    colors = plt.rcParams["axes.prop_cycle"]()
+    # plot time stamp error
+    color = next(colors)["color"]
+    axes[3].plot(metrics.sender_times, metrics.timestamp_errors, color=color, label = "Time Stamp Error")
+
+    colors = plt.rcParams["axes.prop_cycle"]()
+    # plot time estimation errors
+    color = next(colors)["color"]
+    axes[4].plot(metrics.sender_times, metrics.time_estimate_errors, color=color, alpha=0.3, label = "Estimated Receiver Time Error (Biased)")
+    axes[4].plot(metrics.sender_times, metrics.time_estimate_errors_corrected, color=color, alpha=0.8, label = "Estimated Receiver Time Error (Corrected)")
+
+    #axes[5].plot(sender_times[0], group_latencies, color=color, label = "Group Latency")
+
+    color = next(colors)["color"]
+    axes[6].plot(metrics.sender_times, metrics.receiver_packet_processing_times, color=color, label = "Packet Processing Time")
+
+    axes[7].plot(metrics.sender_times, metrics.rx_latencies, color=next(colors)["color"], alpha = 0.5, label = "RX Latency (est.)")
+    axes[7].plot(metrics.sender_times, metrics.tx_latencies, color=next(colors)["color"], alpha = 0.5, label = "TX Latency (est.)")
+    axes[7].plot(metrics.sender_times, metrics.latencies, color=next(colors)["color"], alpha = 0.9, label = "Device Latency")
+    axes[7].plot(metrics.sender_times, metrics.frame_rtts, color=next(colors)["color"], alpha = 0.9, label = "Frame RTT")
+
+    # make all ticks of uneven plot numbers to the right side
+    for ax in fig.get_axes()[1::2]:
+        ax.yaxis.tick_right()
+
+    # configure all axes to look good
+    for ax in fig.get_axes():
+        #ax.label_outer()
+        ax.sharex(axes[1])
+        #ax.set_xlabel('Packet')
+        ax.set_xlabel('Sender Time (ms)')
+        ax.set_ylabel('ms')
+        ax.grid()
+        ax.legend()
+
+    for ax in fig.get_axes()[4:]:
+        ax.set_ylim(bottom=-20) 
+    fig.tight_layout()
+    # Show plot
+    plt.show()
 
 def argmedian(data):
     """

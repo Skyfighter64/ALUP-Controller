@@ -6,6 +6,7 @@ import logging
 import functools
 import numpy as np
 from matplotlib import pyplot as plt
+import statistics
 
 """
 
@@ -173,6 +174,44 @@ def log_device_stats(device, metrics, frame):
     metrics.latencies.append(device.latency)
 
 
+
+def PrintSummary(metrics):
+    """
+    Print a summary of the most relevant metrics
+    from the given object
+    """
+    if (metrics == None):
+        print("No Metrics to summarize")
+        return
+
+    print("\n------[Metrics Summary]--------\n")
+    print("Total runtime: " + str(time.strftime('%Hh:%Mm:%Ss', time.gmtime(metrics.runtime))))
+    print("Measurements: " + str(len(metrics)))
+    print("\n------[Receiver]--------\n")
+    PrintMetricSummary("Receiver Packet Processing time", metrics.receiver_packet_processing_times)
+    PrintMetricSummary("Receiver Buffer Usage", metrics.openResponses)
+    PrintMetricSummary("Packet Time Stamp Errors (if timestamp != 0)", metrics.timestamp_errors)
+    print("\n------[Time Synchronization]--------\n")
+    PrintMetricSummary("Time Deltas", metrics.time_deltas)
+    PrintMetricSummary("Time Deltas (raw)", metrics.time_deltas_raw)
+    PrintMetricSummary("Time Synchronization Error", metrics.time_estimate_errors)
+    PrintMetricSummary("Time Synchronization Error (Corrected)", metrics.time_estimate_errors_corrected)
+    print("\n------[Time Drift]--------\n")
+    PrintDrift(metrics)
+    print("\n------[Latency]--------\n")
+    PrintMetricSummary("Device Latency", metrics.latencies)
+    PrintMetricSummary("Frame RTT", metrics.frame_rtts)
+    PrintMetricSummary("TX Latency (estimate)", metrics.tx_latencies)
+    PrintMetricSummary("RX Latency (estimate)", metrics.rx_latencies)
+    print("\n-------------------------------")
+
+
+
+def PrintMetricSummary(metric_name, data):
+    print(metric_name + ":")
+    print("\tMean: %.2fms, Variance: %.4fms\n\t(Min: %.2fms, Max: %.2fms, Range: %.2fms) " % (statistics.mean(data), statistics.variance(data), min(data), max(data), max(data) - min(data) ))
+
+    
 
 def PrintDrift(metrics):
     """

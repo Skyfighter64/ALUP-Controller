@@ -331,12 +331,12 @@ class AlupConnection(cmd.Cmd):
             pass
         elif (args.command == "print"):
             print("Printing out results from last measurement")
-            print("WIP, for now only drift is printed")
-            metrics.PrintDrift(self._metrics_cache)
-            pass
+            metrics.PrintSummary(self._metrics_cache)
         elif (args.command == "clear"):
             self._metrics_cache = None
             print("Cleared cached metrics")
+
+
 
     def do_measure_drift(self, args):
         """

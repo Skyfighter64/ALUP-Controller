@@ -70,6 +70,13 @@ class Metrics():
         # the number of currently unanswered frames
         #NOTE: use this to monitor receiver's buffer usage
         self.openResponses = []
+    
+    def __len__(self):
+        """
+        The number of measurements taken equals the number
+        of measuements in sender_times
+        """
+        return len(self.sender_times)
 
 
 def Measure(device:Device,  measurements=10_000):

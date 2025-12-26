@@ -84,14 +84,14 @@ def Measure(device:Device,  measurements=10_000):
     # create metrics object to store the logged data in
     metrics = Metrics()
 
-    # register data collection callback to collect data as soon as a frame gets its response
-    device._onFrameResponse = functools.partial(log_device_stats, device, metrics)
-    
     # send some frames to get a first calibration for the time synchronization
     # This is NEEDED when using time stamps later on
     logger.info("Calibrating time delta")
     device.Calibrate()
     logger.info("Done")
+
+    # register data collection callback to collect data as soon as a frame gets its response
+    device._onFrameResponse = functools.partial(log_device_stats, device, metrics)
 
     print(f"Starting to take {measurements} Measurements for device '{device.configuration.deviceName}'.\nTo interrupt, press Ctrl + c.")
 

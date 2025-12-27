@@ -20,14 +20,18 @@ def Ping(device : Device, n = 4, pause = 1000):
     print("Registered Callback")
     for i in range(n):
         try:
+            time.sleep(pause/1000)
             frame = Frame()
             frame.timestamp = 0
             device.Send(frame)
-            print(f"Response Received. Device Latency: {metrics.device_latency}ms, Frame Latency: {metrics.frame_latency}, TX/RX latency: {metrics.tx_latency}/{metrics.rx_latency}")
+            print(f"Response Received. Device Latency: {metrics.device_latency}ms, Frame Latency: {metrics.frame_latency}ms, TX|RX latency: {metrics.tx_latency}ms | {metrics.rx_latency}ms")
         except TimeoutError as e:
             print("Device timed out.")
             print(e)
-        time.sleep(pause/1000)
+        except KeyboardInterrupt:
+            print("Ctl+C pressed, stopping")
+            device.FlushBuffer()
+            return
 
 def _ping_callback(device : Device, metrics : PingMetrics, frame):
     metrics.frame_latency = frame._t_response_in - frame._t_frame_out
@@ -35,5 +39,5 @@ def _ping_callback(device : Device, metrics : PingMetrics, frame):
 
     # calculate rx and tx latencies (with correction)
     metrics.tx_latency = frame._t_receiver_in - (frame._t_frame_out + device.time_delta_ms)
-    metrics.rx_latency = (frame._t_response_in + device.time_delta_ms) - frame._t_receiver_out
+    metrics.rx_latency = frame._t_receiver_out - (frame._t_response_in + device.time_delta_ms)
 

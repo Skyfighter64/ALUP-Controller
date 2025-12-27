@@ -14,6 +14,9 @@ class PingMetrics():
         self.frame_latency = 0
 
 def Ping(device : Device, n = 4, pause = 1000):
+    """
+    Ping a given device for the given amount n, pausing the given amount of ms between each try
+    """
     print(f"Pinging {device.configuration.deviceName} {n} times...")
     metrics = PingMetrics()
     device._onFrameResponse = functools.partial(_ping_callback, device, metrics)

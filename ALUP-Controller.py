@@ -312,6 +312,13 @@ class AlupConnection(cmd.Cmd):
         print("Done.")
 
     def do_ping(self, args):
+        """
+        Ping the device
+        Options: -n [number of tries], -d --delay [ms between pings]
+
+        NOTE: RX/TX latencies are dependent on time synchronizations and therefore 
+              contain errors for slow, sparse pinging
+        """
         parser = argparse.ArgumentParser(
                     prog='ping',
                     description='ping an ALUP device',

@@ -304,7 +304,12 @@ class AlupConnection(cmd.Cmd):
             except ValueError:
                 print("Unknown Log Level: " + newLogLevel)
 
-
+    def do_calibrate(self, args):
+        """
+        Calibrate the time sychronization for the connected device
+        """
+        self.device.Calibrate()
+        print("Done.")
 
     def do_ping(self, args):
         parser = argparse.ArgumentParser(

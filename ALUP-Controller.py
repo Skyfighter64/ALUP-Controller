@@ -16,7 +16,7 @@ import animator
 
 from inspect import getmembers, isfunction
 
-from tools import metrics
+from tools import metrics, ping
 
 #sys.path.insert(0,'Python-ALUP')
 #import importlib  
@@ -306,10 +306,31 @@ class AlupConnection(cmd.Cmd):
 
 
 
+    def do_ping(self, args):
+        parser = argparse.ArgumentParser(
+                    prog='ping',
+                    description='ping an ALUP device',
+                    exit_on_error=False)  
+        parser.add_argument('-n', type=int, default=4, help="The number of times to ping the device")
+        parser.add_argument('-d', '--delay', help="the delay in ms between each ping attempt", type=int, default=1_000)
+        try:
+            args = parser.parse_args(args.split(" "))
+        except Exception as e:
+            # Do not exit on error
+            print(e)
+            return False
+        # ping the device continuously every second
+        ping.Ping(self.device, args.n, args.delay)
+
+
+
     def do_metrics(self, args):
         """
         measure, plot or analyze protocol relevant metrics
         """
+        # TODO: add 'monitor' command to register callback for monitoring outside
+        # of metrics. WARNING: when running for long time / forgetting to disable this
+        # will need a lot of memory
         parser = argparse.ArgumentParser(
                     prog='metrics',
                     description='measure, plot or analyze protocol relevant metrics',

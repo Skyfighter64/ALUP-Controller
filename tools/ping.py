@@ -39,5 +39,5 @@ def _ping_callback(device : Device, metrics : PingMetrics, frame):
 
     # calculate rx and tx latencies (with correction)
     metrics.tx_latency = frame._t_receiver_in - (frame._t_frame_out + device.time_delta_ms)
-    metrics.rx_latency = frame._t_receiver_out - (frame._t_response_in + device.time_delta_ms)
+    metrics.rx_latency = (frame._t_response_in + device.time_delta_ms) - frame._t_receiver_out 
 

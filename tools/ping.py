@@ -35,6 +35,7 @@ def Ping(device : Device, n = 4, pause = 1000):
             print("Ctl+C pressed, stopping")
             device.FlushBuffer()
             return
+    device.FlushBuffer()
 
 def _ping_callback(device : Device, metrics : PingMetrics, frame):
     metrics.frame_latency = frame._t_response_in - frame._t_frame_out

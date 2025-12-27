@@ -490,6 +490,7 @@ def ApplyAnimation(device, args):
             anim.Play(animation, *castedArgs)
         except KeyboardInterrupt:
             print("Ctl + c pressed. Stopping animation.")
+            device.FlushBuffer()
             return
 
     except AttributeError:

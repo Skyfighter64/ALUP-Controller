@@ -94,11 +94,12 @@ Type 'help' for available commands"""
     def do_loglevel(self, args):
         """Get or set the log level.
         Usage: loglevel [level]
-        @param level: the log level to set. If not given, the currently active log level is printed out.
+        @param level: the log level to set (int or string). If not given, the currently active log level is printed out.
         Possible log levels:
             NOTSET (0)
             PHYSICAL (5)
             DEBUG (10)
+            PROTOCOL (15)
             INFO (20)
             WARNING (30)
             ERROR (40)
@@ -113,8 +114,8 @@ Type 'help' for available commands"""
         else:
             # set the new log level
             try:
-                logger.setLevel(newLogLevel)
-                print("New loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+                Utility.SetLogLevel(logger, newLogLevel)
+                print("loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
             except ValueError:
                 print("Unknown Log Level: " + newLogLevel)
 
@@ -148,6 +149,9 @@ Type 'help' for available commands"""
             ip, port = Utility.TcpConnectionParametersFromString(args.tcp[0])
             print("Connecting to TCP ALUP %s:%s from command line arguments"  % (ip, port))
             self.do_tcpconnect(args=str(ip) + ":" + str(port))
+
+        if(args.loglevel is not None):
+            Utility.SetLogLevel(logging.root, args.loglevel)
 
         return super().preloop()
 
@@ -286,6 +290,7 @@ class AlupConnection(cmd.Cmd):
             NOTSET (0)
             PHYSICAL (5)
             DEBUG (10)
+            PROTOCOL (15)
             INFO (20)
             WARNING (30)
             ERROR (40)
@@ -300,8 +305,8 @@ class AlupConnection(cmd.Cmd):
         else:
             # set the new log level
             try:
-                logger.setLevel(newLogLevel)
-                print("New loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
+                Utility.SetLogLevel(logger, newLogLevel)
+                print("loglevel: " + str(logging.getLevelName(logger.getEffectiveLevel())) + " (" + str(logger.getEffectiveLevel()) + ")")
             except ValueError:
                 print("Unknown Log Level: " + newLogLevel)
 

@@ -17,6 +17,7 @@ import animator
 from inspect import getmembers, isfunction
 
 from tools import metrics, ping
+from tools.util import Utility
 
 #sys.path.insert(0,'Python-ALUP')
 #import importlib  
@@ -55,35 +56,28 @@ Type 'help' for available commands"""
         
 
     def do_connect(self, args):
-        """connect\nconnect [com] [baud]\t:\t Connect to serial device"""
+        """connect\nconnect [com]{:[baud]}\t:\t Connect to serial device with the given COM Port and baud rate. If baudrate is not specified, 115200 will be used"""
         try:
             # extract com port and baud
-            splittedArgs = args.split(" ")
-            com_port = splittedArgs[0]
-            baud = 115200
-
-            if len(splittedArgs) > 1:
-                baud = int(splittedArgs[1])
-
+            port, baud = Utility.SerialConnectionParametersFromString(args)
             # create new ALUP device
             device = Device()
-            device.SerialConnect(com_port, baud) #todo: this hangs if baud is wrong
-            conn = AlupConnection(device, com_port)
-            conn.cmdloop()
+            try:
+                device.SerialConnect(port, baud) #todo: this hangs if baud is wrong
+                conn = AlupConnection(device, port)
+                conn.cmdloop()
+            except TimeoutError:
+                print("Could not connect to device: Timed out.")
+                return
 
         except serial.serialutil.SerialException:
             print("\nError: Could not connect to device: Device not found.\nType \"list\" to list all devices or \"exit\" to return")
 
     def do_tcpconnect(self, args):
-        """tcpconnect\nconnect [ip] [port]\t:\t Connect to a remote device via TCP"""
+        """tcpconnect\nconnect [ip]{:[port]}\t:\t Connect to a remote device via TCP. If port is not specified, 5012 will be used"""
         try:
             # extract com port and baud
-            splittedArgs = args.split(" ")
-            ip = splittedArgs[0]
-            port = 5012
-
-            if len(splittedArgs) > 1:
-                port = int(splittedArgs[1])
+            ip, port = Utility.TcpConnectionParametersFromString(args)
 
             # create new ALUP device
             device = Device()
@@ -136,17 +130,24 @@ Type 'help' for available commands"""
         parser = argparse.ArgumentParser(
                     prog='Alup-Controller',
                     description='Interface with ALUP devices to control addressable LEDs')  
-        parser.add_argument('-p', '--port', action='store')      # option that takes a value
-        parser.add_argument('-b', '--baud', action='store', default="115200")  
         parser.add_argument('--debug', action='store_true')  
+        parser.add_argument('--loglevel', default='INFO', help='Specify the minimum level for log messages (Either String or Int value). Possible log levels: NOTSET (0), DEBUG (10), INFO (20), WARNING (30), ERROR (40), CRITICAL (50). Default: INFO')
+        parser.add_argument('--serial', nargs=1, default=None, help="Specify a serial connected ALUP device replacing the first device of the lightshow: [PORT]{:[BAUD]} eg: COM7:115200. Default Baud:115200")
+        parser.add_argument('--tcp', nargs=1, default=None, help="Specify a TCP connected ALUP device replacing the first device of the lightshow. Format: [ip]{:[PORT]} eg: 127.0.0.1:5012. Default Port: 5012")
+
         args = parser.parse_args()
 
         # apply the commandline arguments
         if(args.debug):
             logging.root.setLevel(logging.DEBUG)
-        if(not args.port is None):
-           print("Connecting to port '%s' with baud %s from command line arguments"  % (args.port, args.baud))
-           self.do_connect(args=str(args.port) + " " + str(args.baud))
+        if(not args.serial is None):
+           port, baud = Utility.SerialConnectionParametersFromString(args.serial[0])
+           print("Connecting to Serial ALUP '%s' with baud %s from command line arguments"  % (port, baud))
+           self.do_connect(args=str(port) + ":" + str(baud))
+        elif(not args.tcp is None):
+            ip, port = Utility.TcpConnectionParametersFromString(args.tcp[0])
+            print("Connecting to TCP ALUP %s:%s from command line arguments"  % (ip, port))
+            self.do_tcpconnect(args=str(ip) + ":" + str(port))
 
         return super().preloop()
 

@@ -161,6 +161,9 @@ Type 'help' for available commands"""
 
 
 class AlupConnection(cmd.Cmd):
+    """
+    Command loop for interacting with an already connected ALUP Device
+    """
     def __init__(self, device : Device,  com_port : str):   
         self.device = device
         self.prompt = "(%s)> " % (com_port)
@@ -182,23 +185,51 @@ class AlupConnection(cmd.Cmd):
 
 
     def do_set(self, args):
-        """set [i] [color]\t:\t Set led with index i to the specified color (Starting at 0).[color] is a hex 0xRRGGBB color value, eg. 0xff00ff"""
+        """set [i]{:[j]} [color]\t:\t Set led with index [i] to the specified color.
+            Alternatively, set a range of leds with start index i (inclusive) and end index j (exclusive) to the specified color
+            [color] is a hex 0xRRGGBB color value, eg. 0xff00ff.
+            
+            Examples:
+            set 20 0x00ff00
+            set 12:44 0xab4155
+            """
         try:
             splittedArgs = args.split(" ")
-            led_index = int(splittedArgs[0])
-            colors = [int(splittedArgs[1], 16)]
+
+            # retrieve the index of the LED(s) to set
+            if(':' in splittedArgs[0]):
+                # range of indices given
+                splittedIndices = splittedArgs[0].split(":")
+                start_led_index  = int(splittedIndices[0])
+                end_led_index = int(splittedIndices[1])   
+            else:
+                # only single index given
+                start_led_index = int(splittedArgs[0])
+                # NOTE: add 1 because the index range is exclusive
+                end_led_index = start_led_index + 1
+
+                # check user input for validity
+            if(end_led_index <= start_led_index):
+                print(f"Invalid Index Range {start_led_index}:{end_led_index} given. End Index must be greater than start index.")
+                return  
+            if(start_led_index < 0 or end_led_index < 0):
+                print(f"Invalid Index given. Index cannot be negative.")
+                return
+
+            # retrieve the color value which should be set        
+            color = int(splittedArgs[1], 16)
+
+            # generate the color array and apply it to the LEDs
+            colors = [color] * (end_led_index - start_led_index)
             self.device.SetColors(colors)
-            self.device.frame.offset = led_index
+            self.device.frame.timestamp = 0
+            self.device.frame.offset = start_led_index
             self.device.Send()
         except ValueError:
             print("index/color Values have to be integer")
         except IndexError:
             print("Wrong amount of arguments given. Expected [i : int], [color : int].\n Type 'help set' for more")
 
-
-    def do_setrange(self, args):
-        """setrange [range] [color]\t:\t Set the leds to the given array. All unspecified leds remain unchanged"""
-        pass
 
     def do_repeat(self, args):
         # todo: function to repeat array of colors until end of led strip
@@ -210,6 +241,8 @@ class AlupConnection(cmd.Cmd):
             splittedArgs = args.split(" ")
             colors = [int(splittedArgs[0], 16)] * self.device.configuration.ledCount
             self.device.SetColors(colors)
+            self.device.frame.offset = 0 
+            self.device.frame.timestamp = 0
             self.device.Send()
         except ValueError:
             print("color Value has to be integer. Expected [i : int], [color : int].\n Type 'help set' for more")

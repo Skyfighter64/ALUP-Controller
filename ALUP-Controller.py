@@ -185,8 +185,9 @@ class AlupConnection(cmd.Cmd):
 
 
     def do_set(self, args):
-        """set [i]{:[j]} [color]\t:\t Set led with index [i] to the specified color.
-            Alternatively, set a range of leds with start index i (inclusive) and end index j (exclusive) to the specified color
+        """set [i]{:[j]} [color]
+            Set led with index [i] to the specified [color].
+            Alternatively, set a range of leds with start index [i] (incl.) and end index [j] (excl.) to the specified [color]
             [color] is a hex 0xRRGGBB color value, eg. 0xff00ff.
             
             Examples:

@@ -18,6 +18,8 @@ from inspect import getmembers, isfunction
 
 from tools import metrics, ping
 from tools.util import Utility
+from tools import mDNS
+
 
 #sys.path.insert(0,'Python-ALUP')
 #import importlib  
@@ -63,7 +65,7 @@ Type 'help' for available commands"""
             # create new ALUP device
             device = Device()
             try:
-                device.SerialConnect(port, baud) #todo: this hangs if baud is wrong
+                device.SerialConnect(port, baud)
                 conn = AlupConnection(device, port)
                 conn.cmdloop()
             except TimeoutError:
@@ -226,6 +228,7 @@ class AlupConnection(cmd.Cmd):
             self.device.frame.timestamp = 0
             self.device.frame.offset = start_led_index
             self.device.Send()
+            self.device.FlushBuffer()
         except ValueError:
             print("index/color Values have to be integer")
         except IndexError:
@@ -245,6 +248,7 @@ class AlupConnection(cmd.Cmd):
             self.device.frame.offset = 0 
             self.device.frame.timestamp = 0
             self.device.Send()
+            self.device.FlushBuffer()
         except ValueError:
             print("color Value has to be integer. Expected [i : int], [color : int].\n Type 'help set' for more")
         except IndexError:
@@ -471,8 +475,10 @@ def ApplyEffect(args, device):
         # call effect function with args
         colors = effect(device.configuration.ledCount, *castedArgs)
         # send colors to ALUP device
+        
         device.SetColors(colors)
         device.Send()
+        device.FlushBuffer()
     except AttributeError:
         print("Error: could not find function '%s' in effects.py" %(args[0]))
     except TypeError as e:
@@ -589,8 +595,6 @@ def _castString(s):
         print("Warning: Could not convert value %s into native type; Will be interpreted as string" %(s))
         return s
 
-
-
 def ScanForDevices():
     print("Scanning for connected devices")
     ports = list_ports.comports()
@@ -604,6 +608,12 @@ def ScanForDevices():
     for port in ports:
         print("[%s]:\n\tdesc: %s\n\thw id: %s \n\tserial number: %s\n\tproduct: %s (%s), %s (%s)" % (port.device, port.description, port.hwid, port.serial_number, port.product, port.pid, port.manufacturer, port.vid))
 
+    # scan for netowrk devices
+    print("\n\nScanning for ALUP network devices")
+    devices = mDNS.ScanForNetworkDevices()
+    print("\nAvailable Network Devices:")
+    for device in devices:
+        print(f"[{device.server[:-1]}]:\n\tAddress: {mDNS.IPBytesToString(device.addresses[0])}:{device.port}\n\tType: {mDNS.GetProtocolString(device)}")
 
 if __name__ == "__main__":
     AlupController().cmdloop()
